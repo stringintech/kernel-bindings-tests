@@ -1,0 +1,4 @@
+[submodule "go-handler/go-bitcoinkernel"]
+	path = go-handler/go-bitcoinkernel
+	url = https://github.com/stringintech/go-bitcoinkernel.git
+	branch = main
