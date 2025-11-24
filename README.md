@@ -14,11 +14,11 @@ The framework ensures that all language bindings (Go, Python, Rust, etc.) behave
 ## Architecture
 
 ```
-┌─────────────┐         ┌──────────────────┐
-│ Test Runner │────────▶│  Handler Binary  │
-│  (Go CLI)   │ stdin   │  (Go/Rust/etc)   │
-│             │◀────────│                  │
-└─────────────┘ stdout  └──────────────────┘
+┌─────────────┐         ┌───────────────────┐
+│ Test Runner │────────▶│  Handler Binary** │
+│  (Go CLI)   │ stdin   │  (Go/Rust/etc)    │
+│             │◀────────│                   │
+└─────────────┘ stdout  └───────────────────┘
        │                         │
        │                         │
        ▼                         ▼
@@ -35,7 +35,7 @@ The framework ensures that all language bindings (Go, Python, Rust, etc.) behave
 3. [**Test Cases**](./testdata): JSON files defining requests and expected responses
 4. [**Mock Handler**](./cmd/mock-handler/main.go): Validates the runner by echoing expected responses from test cases
 
-**Handler binaries** are not hosted in this repository. They must be implemented separately following the [**Handler Specification**](./docs/handler-spec.md) and should:
+** **Handler binaries** are not hosted in this repository. They must be implemented separately following the [**Handler Specification**](./docs/handler-spec.md) and should:
 - Implement the JSON protocol for communication with the test runner
 - Call the binding API to execute operations
 - Pin to a specific version/tag of this test repository
@@ -50,4 +50,14 @@ make build
 
 # Run tests against the mock handler
 make test
+```
+
+Use the test runner: 
+
+```bash
+# Build both runner
+make build
+
+# Run the Test runner against your Handler binary:
+ ./build/runner --handler <<path to your handler>> 
 ```
