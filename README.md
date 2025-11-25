@@ -42,22 +42,26 @@ The framework ensures that all language bindings (Go, Python, Rust, etc.) behave
 
 ## Getting Started
 
-Build and test against the mock handler:
+### Testing Your Binding (Custom Handler)
+
+Test your handler implementation using the test runner:
+
+```bash
+# Build the test runner
+make runner
+
+# Run the test runner against your handler binary
+./build/runner --handler <path-to-your-handler>
+```
+
+### Testing the Runner
+
+Build and test the runner using the mock handler:
 
 ```bash
 # Build both runner and mock handler
 make build
 
-# Run tests against the mock handler
+# Run the test runner against the mock handler
 make test
-```
-
-Use the test runner: 
-
-```bash
-# Build both runner
-make build
-
-# Run the Test runner against your Handler binary:
- ./build/runner --handler <<path to your handler>> 
 ```
