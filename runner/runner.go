@@ -2,7 +2,6 @@ package runner
 
 import (
 	"bufio"
-	"bytes"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -142,31 +141,51 @@ func (tr *TestRunner) runTest(test TestCase) SingleTestResult {
 
 // validateResponse checks if response matches expected result
 func validateResponse(test TestCase, resp *Response) SingleTestResult {
-	// Check if we expected an error
+	// Check success flag matches
+	if test.Expected.Success != resp.Success {
+		if test.Expected.Success {
+			errMsg := "Expected success=true, but got success=false"
+			if resp.Error != nil {
+				errMsg += fmt.Sprintf(" with error: %s.%s", resp.Error.Code.Type, resp.Error.Code.Member)
+			}
+			return SingleTestResult{
+				TestID:  test.ID,
+				Passed:  false,
+				Message: errMsg,
+			}
+		}
+		return SingleTestResult{
+			TestID:  test.ID,
+			Passed:  false,
+			Message: "Expected success=false, but got success=true",
+		}
+	}
+
+	// If we expected an error with specific code, validate it
 	if test.Expected.Error != nil {
 		if resp.Error == nil {
 			return SingleTestResult{
 				TestID:  test.ID,
 				Passed:  false,
-				Message: fmt.Sprintf("Expected error type %s, but got no error", test.Expected.Error.Type),
+				Message: fmt.Sprintf("Expected error %s.%s, but got no error", test.Expected.Error.Code.Type, test.Expected.Error.Code.Member),
 			}
 		}
 
-		// Check error type
-		if resp.Error.Type != test.Expected.Error.Type {
+		// Check error code type
+		if resp.Error.Code.Type != test.Expected.Error.Code.Type {
 			return SingleTestResult{
 				TestID:  test.ID,
 				Passed:  false,
-				Message: fmt.Sprintf("Expected error type %s, got %s", test.Expected.Error.Type, resp.Error.Type),
+				Message: fmt.Sprintf("Expected error type %s, got %s", test.Expected.Error.Code.Type, resp.Error.Code.Type),
 			}
 		}
 
-		// Check error variant if specified
-		if test.Expected.Error.Variant != "" && resp.Error.Variant != test.Expected.Error.Variant {
+		// Check error code member
+		if resp.Error.Code.Member != test.Expected.Error.Code.Member {
 			return SingleTestResult{
 				TestID:  test.ID,
 				Passed:  false,
-				Message: fmt.Sprintf("Expected error variant %s, got %s", test.Expected.Error.Variant, resp.Error.Variant),
+				Message: fmt.Sprintf("Expected error member %s, got %s", test.Expected.Error.Code.Member, resp.Error.Code.Member),
 			}
 		}
 
@@ -177,52 +196,13 @@ func validateResponse(test TestCase, resp *Response) SingleTestResult {
 		}
 	}
 
-	// Check if we expected success
-	if test.Expected.Success != nil {
+	// Success case with no specific error expected
+	if test.Expected.Success {
 		if resp.Error != nil {
-			errMsg := fmt.Sprintf("Expected success, but got error: %s", resp.Error.Type)
-			if resp.Error.Variant != "" {
-				errMsg += fmt.Sprintf(" (variant: %s)", resp.Error.Variant)
-			}
 			return SingleTestResult{
 				TestID:  test.ID,
 				Passed:  false,
-				Message: errMsg,
-			}
-		}
-
-		if resp.Success == nil {
-			return SingleTestResult{
-				TestID:  test.ID,
-				Passed:  false,
-				Message: "Expected success, but response contained no success field",
-			}
-		}
-
-		// Normalize JSON for comparison
-		var expectedData, actualData interface{}
-		if err := json.Unmarshal(bytes.TrimSpace(*test.Expected.Success), &expectedData); err != nil {
-			return SingleTestResult{
-				TestID:  test.ID,
-				Passed:  false,
-				Message: fmt.Sprintf("Invalid expected JSON: %v", err),
-			}
-		}
-		if err := json.Unmarshal(bytes.TrimSpace(*resp.Success), &actualData); err != nil {
-			return SingleTestResult{
-				TestID:  test.ID,
-				Passed:  false,
-				Message: fmt.Sprintf("Invalid response JSON: %v", err),
-			}
-		}
-		expectedNormalized, _ := json.Marshal(expectedData)
-		actualNormalized, _ := json.Marshal(actualData)
-
-		if !bytes.Equal(expectedNormalized, actualNormalized) {
-			return SingleTestResult{
-				TestID:  test.ID,
-				Passed:  false,
-				Message: fmt.Sprintf("Success mismatch:\nExpected: %s\nActual:   %s", string(expectedNormalized), string(actualNormalized)),
+				Message: fmt.Sprintf("Expected success with no error, but got error: %s.%s", resp.Error.Code.Type, resp.Error.Code.Member),
 			}
 		}
 		return SingleTestResult{
@@ -231,10 +211,12 @@ func validateResponse(test TestCase, resp *Response) SingleTestResult {
 			Message: "Test passed",
 		}
 	}
+
+	// Failure case with no specific error code (just success=false)
 	return SingleTestResult{
 		TestID:  test.ID,
-		Passed:  false,
-		Message: "Test has no expected result defined",
+		Passed:  true,
+		Message: "Test passed (expected failure without specific error)",
 	}
 }
 

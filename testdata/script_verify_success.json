@@ -22,7 +22,7 @@
         "spent_outputs": []
       },
       "expected": {
-        "success": {}
+        "success": true
       }
     },
     {
@@ -45,7 +45,7 @@
         "spent_outputs": []
       },
       "expected": {
-        "success": {}
+        "success": true
       }
     },
     {
@@ -68,7 +68,7 @@
         "spent_outputs": []
       },
       "expected": {
-        "success": {}
+        "success": true
       }
     }
   ]

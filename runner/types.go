@@ -15,8 +15,8 @@ type TestCase struct {
 
 // TestExpectation defines what response is expected
 type TestExpectation struct {
-	Success *json.RawMessage `json:"success,omitempty"` // Expected successful result
-	Error   *Error           `json:"error,omitempty"`   // Expected error
+	Success bool   `json:"success"`         // Whether operation should succeed
+	Error   *Error `json:"error,omitempty"` // Expected error details
 }
 
 // TestSuite represents a collection of test cases
@@ -35,13 +35,17 @@ type Request struct {
 
 // Response represents a response from the handler
 type Response struct {
-	ID      string           `json:"id"`
-	Success *json.RawMessage `json:"success,omitempty"`
-	Error   *Error           `json:"error,omitempty"`
+	ID      string `json:"id"`
+	Success bool   `json:"success"`         // Whether operation succeeded
+	Error   *Error `json:"error,omitempty"` // Error details (if success=false)
 }
 
 // Error represents an error response
 type Error struct {
-	Type    string `json:"type"`
-	Variant string `json:"variant,omitempty"`
+	Code ErrorCode `json:"code"`
+}
+
+type ErrorCode struct {
+	Type   string `json:"type"`   // e.g., "btck_ScriptVerifyStatus"
+	Member string `json:"member"` // e.g., "ERROR_INVALID_FLAGS_COMBINATION"
 }
