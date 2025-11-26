@@ -5,7 +5,7 @@
     {
       "id": "error_invalid_p2pkh_wrong_signature",
       "description": "P2PKH script verification fails due to wrong signature (malformed final opcode)",
-      "method": "script_pubkey.verify",
+      "method": "btck_script_pubkey_verify",
       "params": {
         "script_pubkey_hex": "76a9144bfbaf6afb76cc5771bc6404810d1cc041a6933988ff",
         "amount": 0,
@@ -31,7 +31,7 @@
     {
       "id": "error_invalid_p2sh_segwit_wrong_amount",
       "description": "P2SH-wrapped SegWit verification fails due to incorrect amount",
-      "method": "script_pubkey.verify",
+      "method": "btck_script_pubkey_verify",
       "params": {
         "script_pubkey_hex": "a91434c06f8c87e355e123bdc6dda4ffabc64b6989ef87",
         "amount": 900000,
@@ -57,7 +57,7 @@
     {
       "id": "error_invalid_native_segwit_wrong_script",
       "description": "Native SegWit verification fails due to malformed witness script hash",
-      "method": "script_pubkey.verify",
+      "method": "btck_script_pubkey_verify",
       "params": {
         "script_pubkey_hex": "0020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58f",
         "amount": 18393430,
@@ -83,7 +83,7 @@
     {
       "id": "error_tx_input_index_out_of_bounds",
       "description": "Input index exceeds the number of inputs in the transaction",
-      "method": "script_pubkey.verify",
+      "method": "btck_script_pubkey_verify",
       "params": {
         "script_pubkey_hex": "76a9144bfbaf6afb76cc5771bc6404810d1cc041a6933988ac",
         "amount": 0,
@@ -114,7 +114,7 @@
     {
       "id": "error_spent_outputs_mismatch",
       "description": "Spent outputs array length doesn't match transaction input count",
-      "method": "script_pubkey.verify",
+      "method": "btck_script_pubkey_verify",
       "params": {
         "script_pubkey_hex": "76a9144bfbaf6afb76cc5771bc6404810d1cc041a6933988ac",
         "amount": 0,
@@ -149,7 +149,7 @@
     {
       "id": "error_invalid_flags",
       "description": "Verification flags contain invalid bits",
-      "method": "script_pubkey.verify",
+      "method": "btck_script_pubkey_verify",
       "params": {
         "script_pubkey_hex": "76a9144bfbaf6afb76cc5771bc6404810d1cc041a6933988ac",
         "amount": 0,
@@ -173,7 +173,7 @@
     {
       "id": "error_invalid_flags_combination",
       "description": "VERIFY_WITNESS flag requires P2SH flag to be set as well",
-      "method": "script_pubkey.verify",
+      "method": "btck_script_pubkey_verify",
       "params": {
         "script_pubkey_hex": "76a9144bfbaf6afb76cc5771bc6404810d1cc041a6933988ac",
         "amount": 0,
@@ -197,7 +197,7 @@
     {
       "id": "error_spent_outputs_required",
       "description": "Taproot verification requires spent outputs to be provided",
-      "method": "script_pubkey.verify",
+      "method": "btck_script_pubkey_verify",
       "params": {
         "script_pubkey_hex": "76a9144bfbaf6afb76cc5771bc6404810d1cc041a6933988ac",
         "amount": 0,
