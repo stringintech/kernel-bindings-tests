@@ -81,8 +81,10 @@ func handleRequest(line string, testIndex map[string]string) error {
 		resp := runner.Response{
 			ID: req.ID,
 			Error: &runner.Error{
-				Type:    "Handler",
-				Variant: "UnknownTest",
+				Code: &runner.ErrorCode{
+					Type:   "Handler",
+					Member: "UNKNOWN_TEST",
+				},
 			},
 		}
 		return writeResponse(resp)
@@ -94,8 +96,10 @@ func handleRequest(line string, testIndex map[string]string) error {
 		resp := runner.Response{
 			ID: req.ID,
 			Error: &runner.Error{
-				Type:    "Handler",
-				Variant: "LoadError",
+				Code: &runner.ErrorCode{
+					Type:   "Handler",
+					Member: "LOAD_ERROR",
+				},
 			},
 		}
 		return writeResponse(resp)
@@ -113,8 +117,10 @@ func handleRequest(line string, testIndex map[string]string) error {
 		resp := runner.Response{
 			ID: req.ID,
 			Error: &runner.Error{
-				Type:    "Handler",
-				Variant: "TestNotFound",
+				Code: &runner.ErrorCode{
+					Type:   "Handler",
+					Member: "TEST_NOT_FOUND",
+				},
 			},
 		}
 		return writeResponse(resp)
@@ -125,8 +131,10 @@ func handleRequest(line string, testIndex map[string]string) error {
 		resp := runner.Response{
 			ID: req.ID,
 			Error: &runner.Error{
-				Type:    "Handler",
-				Variant: "MethodMismatch",
+				Code: &runner.ErrorCode{
+					Type:   "Handler",
+					Member: "METHOD_MISMATCH",
+				},
 			},
 		}
 		return writeResponse(resp)
@@ -134,9 +142,9 @@ func handleRequest(line string, testIndex map[string]string) error {
 
 	// Build response based on expected result
 	return writeResponse(runner.Response{
-		ID:      req.ID,
-		Success: testCase.Expected.Success,
-		Error:   testCase.Expected.Error,
+		ID:     req.ID,
+		Result: testCase.Expected.Result,
+		Error:  testCase.Expected.Error,
 	})
 }
 
