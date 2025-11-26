@@ -31,13 +31,13 @@ Handlers communicate with the test runner via **stdin/stdout**:
 ```json
 {
   "id": "unique-request-id",
-  "success": { /* method-specific result */ }
+  "success": true
 }
 ```
 
 **Success response fields:**
 - `id` (string, required): Must match the request ID
-- `success` (any, required): Method-specific result data. Must be present on success (can be empty `{}`)
+- `success` (boolean, required): Must be `true` on successful operation
 - `error` (null or omitted): Must not be present on success
 
 ### Error Response
@@ -45,19 +45,23 @@ Handlers communicate with the test runner via **stdin/stdout**:
 ```json
 {
   "id": "unique-request-id",
+  "success": false,
   "error": {
-    "type": "error_category",
-    "variant": "specific_error"
+    "code": {
+      "type": "error_type",
+      "member": "ERROR_MEMBER_NAME"
+    }
   }
 }
 ```
 
 **Error response fields:**
 - `id` (string, required): Must match the request ID
-- `success` (null or omitted): Must not be present on error
-- `error` (object, required): Error details
-  - `type` (string, required): Error category/type
-  - `variant` (string, optional): Specific error variant within the type. Whether the runner expects this field depends on the specific test case
+- `success` (boolean, required): Must be `false` on error
+- `error` (object, optional): Error details. Whether this field is required depends on the specific test case.
+  - `code` (object, optional): Error code details
+    - `type` (string, required): Error type (e.g., "btck_ScriptVerifyStatus")
+    - `member` (string, required): Specific error member (e.g., "ERROR_INVALID_FLAGS_COMBINATION")
 
 ## Handler Requirements
 
@@ -76,13 +80,13 @@ The conformance tests are organized into suites, each testing a specific aspect 
 
 Tests valid Bitcoin script verification scenarios across different transaction types.
 
-**Method:** `script_pubkey.verify`
+**Method:** `btck_script_pubkey_verify`
 
 **Expected Response Format:**
 ```json
 {
   "id": "test-id",
-  "success": {}
+  "success": true
 }
 ```
 
@@ -91,26 +95,35 @@ Tests valid Bitcoin script verification scenarios across different transaction t
 
 Tests error handling for invalid script verification scenarios.
 
-**Method:** `script_pubkey.verify`
+**Method:** `btck_script_pubkey_verify`
 
-**Expected Response Format:**
+**Expected Response Formats:**
+
+**With specific error code:**
 ```json
 {
   "id": "test-id",
+  "success": false,
   "error": {
-    "type": "ScriptVerify",
-    "variant": "ErrorVariant"
+    "code": {
+      "type": "btck_ScriptVerifyStatus",
+      "member": "ERROR_MEMBER_NAME"
+    }
   }
 }
 ```
 
-**Error Variants:**
+**Generic failure (no error details):**
+```json
+{
+  "id": "test-id",
+  "success": false
+}
+```
 
-| Variant | Description |
-|---------|-------------|
-| `TxInputIndex` | The specified input index is out of bounds. The `input_index` parameter is greater than or equal to the number of inputs in the transaction. |
-| `InvalidFlags` | Invalid verification flags were provided. The flags parameter contains bits that don't correspond to any defined verification flag. |
-| `InvalidFlagsCombination` | Invalid or inconsistent verification flags were provided. This occurs when the supplied `script_verify_flags` combination violates internal consistency rules. |
-| `SpentOutputsMismatch` | The spent_outputs array length doesn't match the input count. When spent_outputs is non-empty, it must contain exactly one output for each input in the transaction. |
-| `SpentOutputsRequired` | Spent outputs are required but were not provided. |
-| `Invalid` | Script verification failed. |
+**Error Members:**
+
+| Member | Description |
+|--------|-------------|
+| `ERROR_INVALID_FLAGS_COMBINATION` | Invalid or inconsistent verification flags were provided. This occurs when the supplied `script_verify_flags` combination violates internal consistency rules. |
+| `ERROR_SPENT_OUTPUTS_REQUIRED` | Spent outputs are required but were not provided (e.g., for Taproot verification). |
