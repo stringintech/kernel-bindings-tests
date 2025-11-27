@@ -84,6 +84,9 @@ func (tr *TestRunner) SendRequest(req Request) (*Response, error) {
 		if err := tr.stdout.Err(); err != nil {
 			return nil, fmt.Errorf("failed to read response: %w", err)
 		}
+		if stderrOut, _ := io.ReadAll(tr.stderr); len(stderrOut) > 0 {
+			return nil, fmt.Errorf("handler closed unexpectedly: %s", bytes.TrimSpace(stderrOut))
+		}
 		return nil, fmt.Errorf("handler closed unexpectedly")
 	}
 	respLine := tr.stdout.Text()
