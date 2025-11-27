@@ -100,13 +100,31 @@ func (tr *TestRunner) RunTestSuite(suite TestSuite) TestResult {
 		TotalTests: len(suite.Tests),
 	}
 
+	// Track if any test has failed in a stateful suite
+	suiteHasFailed := false
+
 	for _, test := range suite.Tests {
-		testResult := tr.runTest(test)
+		var testResult SingleTestResult
+
+		// In stateful suites, if any previous test failed, fail all subsequent tests
+		if suite.Stateful && suiteHasFailed {
+			testResult = SingleTestResult{
+				TestID:  test.ID,
+				Passed:  false,
+				Message: "Skipped due to previous test failure in stateful suite",
+			}
+		} else {
+			testResult = tr.runTest(test)
+		}
+
 		result.TestResults = append(result.TestResults, testResult)
 		if testResult.Passed {
 			result.PassedTests++
 		} else {
 			result.FailedTests++
+			if suite.Stateful {
+				suiteHasFailed = true
+			}
 		}
 	}
 
@@ -205,6 +223,51 @@ func validateResponse(test TestCase, resp *Response) SingleTestResult {
 				Message: fmt.Sprintf("Expected success with no error, but got error: %s.%s", resp.Error.Code.Type, resp.Error.Code.Member),
 			}
 		}
+
+		// If we expect specific result data, validate it
+		if test.Expected.Result != nil {
+			if resp.Result == nil {
+				return SingleTestResult{
+					TestID:  test.ID,
+					Passed:  false,
+					Message: "Expected result data, but got none",
+				}
+			}
+
+			// Compare JSON result data (normalize whitespace by comparing unmarshaled values)
+			var expectedResult, actualResult interface{}
+			if err := json.Unmarshal(test.Expected.Result, &expectedResult); err != nil {
+				return SingleTestResult{
+					TestID:  test.ID,
+					Passed:  false,
+					Message: fmt.Sprintf("Failed to parse expected result: %v", err),
+				}
+			}
+			if err := json.Unmarshal(resp.Result, &actualResult); err != nil {
+				return SingleTestResult{
+					TestID:  test.ID,
+					Passed:  false,
+					Message: fmt.Sprintf("Failed to parse actual result: %v", err),
+				}
+			}
+
+			expectedJSON, _ := json.Marshal(expectedResult)
+			actualJSON, _ := json.Marshal(actualResult)
+			if string(expectedJSON) != string(actualJSON) {
+				return SingleTestResult{
+					TestID:  test.ID,
+					Passed:  false,
+					Message: fmt.Sprintf("Result mismatch: expected %s, got %s", string(expectedJSON), string(actualJSON)),
+				}
+			}
+		} else if resp.Result != nil {
+			return SingleTestResult{
+				TestID:  test.ID,
+				Passed:  false,
+				Message: fmt.Sprintf("Expected no result data, but got: %s", string(resp.Result)),
+			}
+		}
+
 		return SingleTestResult{
 			TestID:  test.ID,
 			Passed:  true,
