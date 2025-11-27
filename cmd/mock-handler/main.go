@@ -148,6 +148,7 @@ func handleRequest(line string, testIndex map[string]string) error {
 	return writeResponse(runner.Response{
 		ID:      req.ID,
 		Success: testCase.Expected.Success,
+		Result:  testCase.Expected.Result,
 		Error:   testCase.Expected.Error,
 	})
 }

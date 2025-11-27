@@ -15,14 +15,16 @@ type TestCase struct {
 
 // TestExpectation defines what response is expected
 type TestExpectation struct {
-	Success bool   `json:"success"`         // Whether operation should succeed
-	Error   *Error `json:"error,omitempty"` // Expected error details
+	Success bool            `json:"success"`          // Whether operation should succeed
+	Result  json.RawMessage `json:"result,omitempty"` // Expected result data
+	Error   *Error          `json:"error,omitempty"`  // Expected error details
 }
 
 // TestSuite represents a collection of test cases
 type TestSuite struct {
 	Name        string     `json:"name"`
 	Description string     `json:"description,omitempty"`
+	Stateful    bool       `json:"stateful,omitempty"` // If true, spawn new handler and fail subsequent tests on error
 	Tests       []TestCase `json:"tests"`
 }
 
@@ -35,9 +37,10 @@ type Request struct {
 
 // Response represents a response from the handler
 type Response struct {
-	ID      string `json:"id"`
-	Success bool   `json:"success"`         // Whether operation succeeded
-	Error   *Error `json:"error,omitempty"` // Error details (if success=false)
+	ID      string          `json:"id"`
+	Success bool            `json:"success"`          // Whether operation succeeded
+	Result  json.RawMessage `json:"result,omitempty"` // Result data (if success=true)
+	Error   *Error          `json:"error,omitempty"`  // Error details (if success=false)
 }
 
 // Error represents an error response
