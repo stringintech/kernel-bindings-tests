@@ -84,7 +84,14 @@ func (tr *TestRunner) SendRequest(req Request) (*Response, error) {
 		if err := tr.stdout.Err(); err != nil {
 			return nil, fmt.Errorf("failed to read response: %w", err)
 		}
-		if stderrOut, _ := io.ReadAll(tr.stderr); len(stderrOut) > 0 {
+		// Handler closed stdout prematurely.
+		// Kill the process immediately to force stderr to close.
+		// Without this, there's a rare scenario where stdout closes but stderr remains open,
+		// causing io.ReadAll(tr.stderr) below to block indefinitely waiting for stderr EOF.
+		if tr.cmd.Process != nil {
+			tr.cmd.Process.Kill()
+		}
+		if stderrOut, err := io.ReadAll(tr.stderr); err == nil && len(stderrOut) > 0 {
 			return nil, fmt.Errorf("handler closed unexpectedly: %s", bytes.TrimSpace(stderrOut))
 		}
 		return nil, fmt.Errorf("handler closed unexpectedly")
