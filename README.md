@@ -56,12 +56,12 @@ make runner
 
 ### Testing the Runner
 
-Build and test the runner using the mock handler:
+Build and test the runner:
 
 ```bash
 # Build both runner and mock handler
 make build
 
-# Run the test runner against the mock handler
+# Run runner unit tests and integration tests with mock handler
 make test
 ```

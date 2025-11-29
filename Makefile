@@ -19,6 +19,8 @@ mock-handler:
 	go build -o $(MOCK_HANDLER_BIN) ./cmd/mock-handler
 
 test:
+	@echo "Running runner unit tests..."
+	go test ./runner/...
 	@echo "Running conformance tests with mock handler..."
 	$(RUNNER_BIN) -handler $(MOCK_HANDLER_BIN)
 

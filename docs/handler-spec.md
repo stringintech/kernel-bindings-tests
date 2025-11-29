@@ -24,40 +24,47 @@ Handlers communicate with the test runner via **stdin/stdout**:
 **Fields:**
 - `id` (string, required): Unique identifier for this request
 - `method` (string, required): The operation to perform. Each unique method must be implemented by the handler to exercise the corresponding binding API operation.
-- `params` (object, required): Method-specific parameters (can be `null` or `{}`)
+- `params` (object, optional): Method-specific parameters
 
-### Response
+### Success Response
 
 ```json
 {
   "id": "unique-request-id",
-  "success": { /* method-specific result */ }
+  "result": {},
+  "error": null
 }
 ```
 
 **Success response fields:**
 - `id` (string, required): Must match the request ID
-- `success` (any, required): Method-specific result data. Must be present on success (can be empty `{}`)
-- `error` (null or omitted): Must not be present on success
+- `result` (any, optional): The return value, or `null` for void/nullptr operations
+- `error`: Must be `null` on success
+
+**Note:** Throughout this protocol, an omitted field is semantically equivalent to `null`.
 
 ### Error Response
 
 ```json
 {
   "id": "unique-request-id",
+  "result": null,
   "error": {
-    "type": "error_category",
-    "variant": "specific_error"
+    "code": {
+      "type": "error_type",
+      "member": "ERROR_MEMBER_NAME"
+    }
   }
 }
 ```
 
 **Error response fields:**
 - `id` (string, required): Must match the request ID
-- `success` (null or omitted): Must not be present on error
-- `error` (object, required): Error details
-  - `type` (string, required): Error category/type
-  - `variant` (string, optional): Specific error variant within the type. Whether the runner expects this field depends on the specific test case
+- `result`: Must be `null` on error
+- `error` (object, optional): Error details. Whether this field is required depends on the specific test case.
+  - `code` (object, optional): Error code details
+    - `type` (string, required): Error type (e.g., "btck_ScriptVerifyStatus")
+    - `member` (string, required): Specific error member (e.g., "ERROR_INVALID_FLAGS_COMBINATION")
 
 ## Handler Requirements
 
@@ -74,43 +81,49 @@ The conformance tests are organized into suites, each testing a specific aspect 
 ### Script Verification Success Cases
 **File:** [`script_verify_success.json`](../testdata/script_verify_success.json)
 
-Tests valid Bitcoin script verification scenarios across different transaction types.
+Test cases where the script verification operation executes successfully and returns a boolean result (true for valid scripts, false for invalid scripts).
 
-**Method:** `script_pubkey.verify`
+**Method:** `btck_script_pubkey_verify`
 
 **Expected Response Format:**
 ```json
 {
   "id": "test-id",
-  "success": {}
+  "result": true
+}
+```
+or
+```json
+{
+  "id": "test-id",
+  "result": false
 }
 ```
 
 ### Script Verification Error Cases
 **File:** [`script_verify_errors.json`](../testdata/script_verify_errors.json)
 
-Tests error handling for invalid script verification scenarios.
+Test cases where the verification operation fails to determine validity of the script due to bad user input.
 
-**Method:** `script_pubkey.verify`
+**Method:** `btck_script_pubkey_verify`
 
 **Expected Response Format:**
 ```json
 {
   "id": "test-id",
+  "result": null,
   "error": {
-    "type": "ScriptVerify",
-    "variant": "ErrorVariant"
+    "code": {
+      "type": "btck_ScriptVerifyStatus",
+      "member": "ERROR_MEMBER_NAME"
+    }
   }
 }
 ```
 
-**Error Variants:**
+**Error Members:**
 
-| Variant | Description |
-|---------|-------------|
-| `TxInputIndex` | The specified input index is out of bounds. The `input_index` parameter is greater than or equal to the number of inputs in the transaction. |
-| `InvalidFlags` | Invalid verification flags were provided. The flags parameter contains bits that don't correspond to any defined verification flag. |
-| `InvalidFlagsCombination` | Invalid or inconsistent verification flags were provided. This occurs when the supplied `script_verify_flags` combination violates internal consistency rules. |
-| `SpentOutputsMismatch` | The spent_outputs array length doesn't match the input count. When spent_outputs is non-empty, it must contain exactly one output for each input in the transaction. |
-| `SpentOutputsRequired` | Spent outputs are required but were not provided. |
-| `Invalid` | Script verification failed. |
+| Member | Description |
+|--------|-------------|
+| `ERROR_INVALID_FLAGS_COMBINATION` | Invalid or inconsistent verification flags were provided. This occurs when the supplied `script_verify_flags` combination violates internal consistency rules. |
+| `ERROR_SPENT_OUTPUTS_REQUIRED` | Spent outputs are required but were not provided (e.g., for Taproot verification). |

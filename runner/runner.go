@@ -112,7 +112,15 @@ func (tr *TestRunner) RunTestSuite(suite TestSuite) TestResult {
 	}
 
 	for _, test := range suite.Tests {
-		testResult := tr.runTest(test)
+		err := tr.runTest(test)
+		testResult := SingleTestResult{
+			TestID: test.ID,
+			Passed: err == nil,
+		}
+		if err != nil {
+			testResult.Message = err.Error()
+		}
+
 		result.TestResults = append(result.TestResults, testResult)
 		if testResult.Passed {
 			result.PassedTests++
@@ -124,8 +132,9 @@ func (tr *TestRunner) RunTestSuite(suite TestSuite) TestResult {
 	return result
 }
 
-// runTest executes a single test case
-func (tr *TestRunner) runTest(test TestCase) SingleTestResult {
+// runTest executes a single test case and validates the response.
+// Returns an error if communication with the handler fails or validation fails.
+func (tr *TestRunner) runTest(test TestCase) error {
 	req := Request{
 		ID:     test.ID,
 		Method: test.Method,
@@ -134,118 +143,102 @@ func (tr *TestRunner) runTest(test TestCase) SingleTestResult {
 
 	resp, err := tr.SendRequest(req)
 	if err != nil {
-		return SingleTestResult{
-			TestID:  test.ID,
-			Passed:  false,
-			Message: fmt.Sprintf("Failed to send request: %v", err),
-		}
+		return err
 	}
-	if resp.ID != test.ID {
-		return SingleTestResult{
-			TestID:  test.ID,
-			Passed:  false,
-			Message: fmt.Sprintf("Response ID mismatch: expected %s, got %s", test.ID, resp.ID),
-		}
-	}
+
 	return validateResponse(test, resp)
 }
 
-// validateResponse checks if response matches expected result
-func validateResponse(test TestCase, resp *Response) SingleTestResult {
-	// Check if we expected an error
+// validateResponse validates that a response matches the expected test outcome.
+// Returns an error if:
+//
+//	Response ID does not match the request ID
+//	Response does not match the expected outcome (error or success)
+func validateResponse(test TestCase, resp *Response) error {
+	if resp.ID != test.ID {
+		return fmt.Errorf("response ID mismatch: expected %s, got %s", test.ID, resp.ID)
+	}
+
 	if test.Expected.Error != nil {
-		if resp.Error == nil {
-			return SingleTestResult{
-				TestID:  test.ID,
-				Passed:  false,
-				Message: fmt.Sprintf("Expected error type %s, but got no error", test.Expected.Error.Type),
-			}
-		}
-
-		// Check error type
-		if resp.Error.Type != test.Expected.Error.Type {
-			return SingleTestResult{
-				TestID:  test.ID,
-				Passed:  false,
-				Message: fmt.Sprintf("Expected error type %s, got %s", test.Expected.Error.Type, resp.Error.Type),
-			}
-		}
-
-		// Check error variant if specified
-		if test.Expected.Error.Variant != "" && resp.Error.Variant != test.Expected.Error.Variant {
-			return SingleTestResult{
-				TestID:  test.ID,
-				Passed:  false,
-				Message: fmt.Sprintf("Expected error variant %s, got %s", test.Expected.Error.Variant, resp.Error.Variant),
-			}
-		}
-
-		return SingleTestResult{
-			TestID:  test.ID,
-			Passed:  true,
-			Message: "Test passed (expected error matched)",
-		}
+		return validateResponseForError(test, resp)
 	}
 
-	// Check if we expected success
-	if test.Expected.Success != nil {
-		if resp.Error != nil {
-			errMsg := fmt.Sprintf("Expected success, but got error: %s", resp.Error.Type)
-			if resp.Error.Variant != "" {
-				errMsg += fmt.Sprintf(" (variant: %s)", resp.Error.Variant)
-			}
-			return SingleTestResult{
-				TestID:  test.ID,
-				Passed:  false,
-				Message: errMsg,
-			}
+	return validateResponseForSuccess(test, resp)
+}
+
+// validateResponseForError validates that a response correctly represents an error case.
+// It ensures the response contains an error, the result is null or omitted, and if an
+// error code is expected, it matches the expected type and member.
+func validateResponseForError(test TestCase, resp *Response) error {
+	if test.Expected.Error == nil {
+		panic("validateResponseForError expects non-nil error")
+	}
+
+	if resp.Error == nil {
+		if test.Expected.Error.Code != nil {
+			return fmt.Errorf("expected error %s.%s, but got no error",
+				test.Expected.Error.Code.Type, test.Expected.Error.Code.Member)
+		}
+		return fmt.Errorf("expected error, but got no error")
+	}
+
+	if !resp.Result.IsNullOrOmitted() {
+		return fmt.Errorf("expected result to be null or omitted when error is present, got: %s", string(resp.Result))
+	}
+
+	if test.Expected.Error.Code != nil {
+		if resp.Error.Code == nil {
+			return fmt.Errorf("expected error code %s.%s, but got error with no code",
+				test.Expected.Error.Code.Type, test.Expected.Error.Code.Member)
 		}
 
-		if resp.Success == nil {
-			return SingleTestResult{
-				TestID:  test.ID,
-				Passed:  false,
-				Message: "Expected success, but response contained no success field",
-			}
+		if resp.Error.Code.Type != test.Expected.Error.Code.Type {
+			return fmt.Errorf("expected error type %s, got %s", test.Expected.Error.Code.Type, resp.Error.Code.Type)
 		}
 
-		// Normalize JSON for comparison
-		var expectedData, actualData interface{}
-		if err := json.Unmarshal(bytes.TrimSpace(*test.Expected.Success), &expectedData); err != nil {
-			return SingleTestResult{
-				TestID:  test.ID,
-				Passed:  false,
-				Message: fmt.Sprintf("Invalid expected JSON: %v", err),
-			}
-		}
-		if err := json.Unmarshal(bytes.TrimSpace(*resp.Success), &actualData); err != nil {
-			return SingleTestResult{
-				TestID:  test.ID,
-				Passed:  false,
-				Message: fmt.Sprintf("Invalid response JSON: %v", err),
-			}
-		}
-		expectedNormalized, _ := json.Marshal(expectedData)
-		actualNormalized, _ := json.Marshal(actualData)
-
-		if !bytes.Equal(expectedNormalized, actualNormalized) {
-			return SingleTestResult{
-				TestID:  test.ID,
-				Passed:  false,
-				Message: fmt.Sprintf("Success mismatch:\nExpected: %s\nActual:   %s", string(expectedNormalized), string(actualNormalized)),
-			}
-		}
-		return SingleTestResult{
-			TestID:  test.ID,
-			Passed:  true,
-			Message: "Test passed",
+		if resp.Error.Code.Member != test.Expected.Error.Code.Member {
+			return fmt.Errorf("expected error member %s, got %s", test.Expected.Error.Code.Member, resp.Error.Code.Member)
 		}
 	}
-	return SingleTestResult{
-		TestID:  test.ID,
-		Passed:  false,
-		Message: "Test has no expected result defined",
+	return nil
+}
+
+// validateResponseForSuccess validates that a response correctly represents a success case.
+// It ensures the response contains no error, and if a result is expected, it matches the
+// expected value.
+func validateResponseForSuccess(test TestCase, resp *Response) error {
+	if test.Expected.Error != nil {
+		panic("validateResponseForSuccess expects nil error")
 	}
+
+	if resp.Error != nil {
+		if resp.Error.Code != nil {
+			return fmt.Errorf("expected success with no error, but got error: %s.%s", resp.Error.Code.Type, resp.Error.Code.Member)
+		}
+		return fmt.Errorf("expected success with no error, but got error")
+	}
+
+	if test.Expected.Result.IsNullOrOmitted() {
+		if !resp.Result.IsNullOrOmitted() {
+			return fmt.Errorf("expected null or omitted result, got: %s", string(resp.Result))
+		}
+		return nil
+	}
+
+	expectedNorm, err := test.Expected.Result.Normalize()
+	if err != nil {
+		return fmt.Errorf("failed to normalize expected result: %w", err)
+	}
+
+	actualNorm, err := resp.Result.Normalize()
+	if err != nil {
+		return fmt.Errorf("failed to normalize actual result: %w", err)
+	}
+
+	if expectedNorm != actualNorm {
+		return fmt.Errorf("result mismatch: expected %s, got %s", expectedNorm, actualNorm)
+	}
+	return nil
 }
 
 // TestResult contains results from running a test suite
