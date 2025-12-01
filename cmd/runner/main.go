@@ -33,6 +33,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Create test runner
+	testRunner, err := runner.NewTestRunner(*handlerPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating test runner: %v\n", err)
+		os.Exit(1)
+	}
+	defer testRunner.CloseHandler()
+
 	// Run tests
 	totalPassed := 0
 	totalFailed := 0
@@ -48,17 +56,8 @@ func main() {
 			continue
 		}
 
-		// Create test runner
-		testRunner, err := runner.NewTestRunner(*handlerPath)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error creating test runner: %v\n", err)
-			continue
-		}
-
 		// Run suite
 		result := testRunner.RunTestSuite(*suite)
-		testRunner.Close()
-
 		printResults(suite, result)
 
 		totalPassed += result.PassedTests
