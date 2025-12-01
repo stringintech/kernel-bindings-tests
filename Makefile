@@ -20,7 +20,7 @@ mock-handler:
 
 test:
 	@echo "Running runner unit tests..."
-	go test ./runner/...
+	go test -v ./runner/...
 	@echo "Running conformance tests with mock handler..."
 	$(RUNNER_BIN) -handler $(MOCK_HANDLER_BIN)
 

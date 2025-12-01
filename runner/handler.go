@@ -18,6 +18,13 @@ var (
 	ErrHandlerClosed = errors.New("handler closed unexpectedly")
 )
 
+// HandlerConfig configures a handler process
+type HandlerConfig struct {
+	Path string
+	Args []string
+	Env  []string
+}
+
 // Handler manages a conformance handler process communicating via stdin/stdout
 type Handler struct {
 	cmd    *exec.Cmd
@@ -26,9 +33,12 @@ type Handler struct {
 	stderr io.ReadCloser
 }
 
-// NewHandler spawns a new handler process at the given path
-func NewHandler(path string) (*Handler, error) {
-	cmd := exec.Command(path)
+// NewHandler spawns a new handler process with the given configuration
+func NewHandler(cfg HandlerConfig) (*Handler, error) {
+	cmd := exec.Command(cfg.Path, cfg.Args...)
+	if cfg.Env != nil {
+		cmd.Env = append(cmd.Environ(), cfg.Env...)
+	}
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {

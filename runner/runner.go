@@ -22,7 +22,7 @@ func NewTestRunner(handlerPath string) (*TestRunner, error) {
 		return nil, fmt.Errorf("handler binary not found: %s", handlerPath)
 	}
 
-	handler, err := NewHandler(handlerPath)
+	handler, err := NewHandler(HandlerConfig{Path: handlerPath})
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +36,7 @@ func NewTestRunner(handlerPath string) (*TestRunner, error) {
 // SendRequest sends a request to the handler, spawning a new handler if needed
 func (tr *TestRunner) SendRequest(req Request) error {
 	if tr.handler == nil {
-		handler, err := NewHandler(tr.handlerPath)
+		handler, err := NewHandler(HandlerConfig{Path: tr.handlerPath})
 		if err != nil {
 			return fmt.Errorf("failed to spawn new handler: %w", err)
 		}
