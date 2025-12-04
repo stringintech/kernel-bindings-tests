@@ -106,13 +106,30 @@ func (tr *TestRunner) RunTestSuite(ctx context.Context, suite TestSuite) TestRes
 		TotalTests: len(suite.Tests),
 	}
 
+	skipTests := false
+
 	for _, test := range suite.Tests {
-		testResult := tr.runTest(ctx, test)
+		var testResult SingleTestResult
+
+		if !skipTests {
+			testResult = tr.runTest(ctx, test)
+		} else {
+			// In stateful suites, if any previous test failed, fail all subsequent tests
+			testResult = SingleTestResult{
+				TestID:  test.ID,
+				Passed:  false,
+				Message: "Skipped due to previous test failure in stateful suite",
+			}
+		}
+
 		result.TestResults = append(result.TestResults, testResult)
 		if testResult.Passed {
 			result.PassedTests++
 		} else {
 			result.FailedTests++
+			if suite.Stateful {
+				skipTests = true
+			}
 		}
 	}
 
