@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -36,6 +37,9 @@ func main() {
 		fmt.Fprintf(os.Stderr, "No test files found\n")
 		os.Exit(1)
 	}
+
+	// Sort test files alphabetically for deterministic execution order
+	sort.Strings(testFiles)
 
 	// Create test runner
 	testRunner, err := runner.NewTestRunner(*handlerPath, *handlerTimeout, *timeout)
