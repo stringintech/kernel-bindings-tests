@@ -40,6 +40,7 @@ type Request struct {
 	ID     string          `json:"id"`
 	Method string          `json:"method"`
 	Params json.RawMessage `json:"params"`
+	Ref    string          `json:"ref,omitempty"`
 }
 
 // Response represents a response from the handler.

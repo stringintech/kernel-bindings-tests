@@ -17,7 +17,8 @@ Handlers communicate with the test runner via **stdin/stdout**:
 {
   "id": "unique-request-id",
   "method": "method_name",
-  "params": { /* method-specific parameters */ }
+  "params": { /* method-specific parameters */ },
+  "ref": "reference-name"
 }
 ```
 
@@ -25,6 +26,7 @@ Handlers communicate with the test runner via **stdin/stdout**:
 - `id` (string, required): Unique identifier for this request
 - `method` (string, required): The operation to perform. Each unique method must be implemented by the handler to exercise the corresponding binding API operation.
 - `params` (object, optional): Method-specific parameters
+- `ref` (string, optional): Reference name for storing the returned object. Required for methods that return object references (see [Object References and Registry](#object-references-and-registry))
 
 ### Response
 
@@ -58,6 +60,30 @@ Handlers communicate with the test runner via **stdin/stdout**:
 3. **ID Matching**: Response `id` must exactly match the request `id`
 4. **Error Handling**: Return error responses for invalid requests or failed operations
 5. **Exit Behavior**: Exit cleanly when stdin closes
+
+## Object References and Registry
+
+Many operations return objects (contexts, blocks, chains, etc.) that must persist across requests. The protocol uses named references and a registry pattern:
+
+**Creating Objects**: Methods that return objects require a `ref` field in the request. The handler stores the object in a registry under that name and returns the reference name as the result.
+
+```json
+// Request
+{"id": "1", "method": "btck_context_create", "params": {...}, "ref": "$ctx1"}
+// Response
+{"id": "1", "result": "$ctx1", "error": null}
+// Handler action: registry["$ctx1"] = created_context_ptr
+```
+
+**Using Objects**: When a parameter is marked as `(reference, required)`, the runner passes the reference name and the handler looks it up:
+
+```json
+// Request
+{"id": "2", "method": "btck_chainstate_manager_create", "params": {"context": "$ctx1"}, "ref": "$csm1"}
+// Handler action: Look up registry["$ctx1"], create manager, store as registry["$csm1"]
+```
+
+**Implementation**: Handlers must maintain a registry (map of reference names to object pointers) throughout their lifetime. Objects remain alive until explicitly destroyed or handler exit.
 
 ## Test Suites and Expected Responses
 
