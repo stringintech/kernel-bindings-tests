@@ -85,7 +85,7 @@ Many operations return objects (contexts, blocks, chains, etc.) that must persis
 
 **Implementation**: Handlers must maintain a registry (map of reference names to object pointers) throughout their lifetime. Objects remain alive until explicitly destroyed or handler exit.
 
-## Test Suites and Expected Responses
+## Test Suites Overview
 
 The conformance tests are organized into suites, each testing a specific aspect of the Bitcoin Kernel bindings. Test files are located in [`../testdata/`](../testdata/).
 
@@ -94,47 +94,187 @@ The conformance tests are organized into suites, each testing a specific aspect 
 
 Test cases where the script verification operation executes successfully and returns a boolean result (true for valid scripts, false for invalid scripts).
 
-**Method:** `btck_script_pubkey_verify`
-
-**Expected Response Format:**
-```json
-{
-  "id": "test-id",
-  "result": true
-}
-```
-or
-```json
-{
-  "id": "test-id",
-  "result": false
-}
-```
-
 ### Script Verification Error Cases
 **File:** [`script_verify_errors.json`](../testdata/script_verify_errors.json)
 
 Test cases where the verification operation fails to determine validity of the script due to bad user input.
 
-**Method:** `btck_script_pubkey_verify`
+### Chain Operations
+**File:** [`chain.json`](../testdata/chain.json)
 
-**Expected Response Format:**
-```json
-{
-  "id": "test-id",
-  "result": null,
-  "error": {
-    "code": {
-      "type": "btck_ScriptVerifyStatus",
-      "member": "ERROR_MEMBER_NAME"
-    }
-  }
-}
-```
+Sets up blocks, checks chain state, and verifies that the chain tip changes as expected after a reorg scenario.
 
-**Error Members:**
+## Method Reference
 
-| Member | Description |
-|--------|-------------|
-| `ERROR_INVALID_FLAGS_COMBINATION` | Invalid or inconsistent verification flags were provided. This occurs when the supplied `script_verify_flags` combination violates internal consistency rules. |
-| `ERROR_SPENT_OUTPUTS_REQUIRED` | Spent outputs are required but were not provided (e.g., for Taproot verification). |
+Methods are grouped by functional area. Each method documents its parameters, return values, and possible errors.
+
+### Context Management
+
+#### `btck_context_create`
+
+Creates a context with specified chain parameters.
+
+**Parameters:**
+- `chain_parameters` (object, required):
+  - `chain_type` (string, required): Chain type ("btck_ChainType_MAINNET", "btck_ChainType_TESTNET", "btck_ChainType_TESTNET_4", "btck_ChainType_SIGNET", "btck_ChainType_REGTEST")
+
+**Result:** String - The reference name from the request `ref` field (e.g., "$context_ref")
+
+**Error:** `{}` when operation fails (C API returned null)
+
+---
+
+### Chainstate Manager Operations
+
+#### `btck_chainstate_manager_create`
+
+Creates a chainstate manager from a context.
+
+**Parameters:**
+- `context` (reference, required): Context reference from `btck_context_create`
+
+**Result:** String - The reference name from the request `ref` field (e.g., "$chainstate_manager_ref")
+
+**Error:** `{}` when operation fails (C API returned null)
+
+---
+
+#### `btck_chainstate_manager_get_active_chain`
+
+Retrieves the currently active chain from the chainstate manager.
+
+**Parameters:**
+- `chainstate_manager` (reference, required): Chainstate manager reference
+
+**Result:** String - The reference name from the request `ref` field (e.g., "$chain_ref")
+
+**Error:** `null` (cannot return error)
+
+---
+
+#### `btck_chainstate_manager_process_block`
+
+Processes a block through validation checks, disk storage, and UTXO set validation; successful processing does not indicate block validity.
+
+**Parameters:**
+- `chainstate_manager` (reference, required): Chainstate manager reference
+- `block` (reference, required): Block reference from `btck_block_create`
+
+**Result:** `null` (void operation)
+
+**Error:** `{}` when processing fails
+
+---
+
+#### `btck_chainstate_manager_destroy`
+
+Destroys a chainstate manager and frees associated resources.
+
+**Parameters:**
+- `chainstate_manager` (reference, required): Chainstate manager reference to destroy
+
+**Result:** `null` (void operation)
+
+**Error:** `null` (cannot return error)
+
+---
+
+### Chain Operations
+
+#### `btck_chain_get_height`
+
+Gets the current height of the active chain.
+
+**Parameters:**
+- `chain` (reference, required): Chain reference from `btck_chainstate_manager_get_active_chain`
+
+**Result:** Integer - The chain height (0 = genesis)
+
+**Error:** `null` (cannot return error)
+
+---
+
+#### `btck_chain_get_by_height`
+
+Retrieves a block tree entry at a specific height in the chain.
+
+**Parameters:**
+- `chain` (reference, required): Chain reference
+- `block_height` (integer, required): Height to query
+
+**Result:** String - The reference name from the request `ref` field (e.g., "$block_tree_entry_ref")
+
+**Error:** `{}` when height is out of bounds (C API returned null)
+
+---
+
+#### `btck_chain_contains`
+
+Checks whether a block tree entry is part of the active chain.
+
+**Parameters:**
+- `chain` (reference, required): Chain reference
+- `block_tree_entry` (reference, required): Block tree entry reference to check
+
+**Result:** Boolean - true if block is in the active chain, false otherwise
+
+**Error:** `null` (cannot return error)
+
+---
+
+### Block Operations
+
+#### `btck_block_create`
+
+Creates a block object from raw block data.
+
+**Parameters:**
+- `raw_block` (string, required): Hex-encoded raw block data
+
+**Result:** String - The reference name from the request `ref` field (e.g., "$block_ref")
+
+**Error:** `{}` when operation fails (C API returned null)
+
+---
+
+#### `btck_block_tree_entry_get_block_hash`
+
+Gets the block hash from a block tree entry.
+
+**Parameters:**
+- `block_tree_entry` (reference, required): Block tree entry reference from `btck_chain_get_by_height`
+
+**Result:** String - The block hash (hex-encoded, 64 characters)
+
+**Error:** `null` (cannot return error)
+
+---
+
+### Script Verification
+
+#### `btck_script_pubkey_verify`
+
+Verifies a script pubkey against spending conditions.
+
+**Parameters:**
+- `script_pubkey` (string): Hex-encoded script pubkey to be spent
+- `amount` (number): Amount of the script pubkey's associated output. May be zero if the witness flag is not set
+- `tx_to` (string): Hex-encoded transaction spending the script_pubkey
+- `input_index` (number): Index of the input in tx_to spending the script_pubkey
+- `flags` (array of strings): Script verification flags controlling validation constraints. Valid flags include:
+  - `btck_ScriptVerificationFlags_P2SH`
+  - `btck_ScriptVerificationFlags_DERSIG`
+  - `btck_ScriptVerificationFlags_NULLDUMMY`
+  - `btck_ScriptVerificationFlags_CHECKLOCKTIMEVERIFY`
+  - `btck_ScriptVerificationFlags_CHECKSEQUENCEVERIFY`
+  - `btck_ScriptVerificationFlags_WITNESS`
+  - `btck_ScriptVerificationFlags_TAPROOT`
+- `spent_outputs` (array of objects): Array of outputs spent by the transaction. May be empty if the taproot flag is not set. Each object contains:
+  - `script_pubkey` (string): Hex-encoded script pubkey of the spent output
+  - `amount` (number): Amount in satoshis of the spent output
+
+**Result:** Boolean - true if script is valid, false if invalid
+
+**Error:** On error, returns error code with type `btck_ScriptVerifyStatus` and member can be one of:
+- `ERROR_INVALID_FLAGS_COMBINATION` - Invalid or inconsistent verification flags were provided. This occurs when the supplied `script_verify_flags` combination violates internal consistency rules.
+- `ERROR_SPENT_OUTPUTS_REQUIRED` - Spent outputs are required but were not provided (e.g., for Taproot verification).
