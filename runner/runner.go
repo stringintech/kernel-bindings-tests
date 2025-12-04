@@ -106,13 +106,30 @@ func (tr *TestRunner) RunTestSuite(ctx context.Context, suite TestSuite) TestRes
 		TotalTests: len(suite.Tests),
 	}
 
+	skipTests := false
+
 	for _, test := range suite.Tests {
-		testResult := tr.runTest(ctx, test)
+		var testResult SingleTestResult
+
+		if !skipTests {
+			testResult = tr.runTest(ctx, test)
+		} else {
+			// In stateful suites, if any previous test failed, fail all subsequent tests
+			testResult = SingleTestResult{
+				TestID:  test.ID,
+				Passed:  false,
+				Message: "Skipped due to previous test failure in stateful suite",
+			}
+		}
+
 		result.TestResults = append(result.TestResults, testResult)
 		if testResult.Passed {
 			result.PassedTests++
 		} else {
 			result.FailedTests++
+			if suite.Stateful {
+				skipTests = true
+			}
 		}
 	}
 
@@ -137,6 +154,11 @@ func (tr *TestRunner) runTest(ctx context.Context, test TestCase) SingleTestResu
 		ID:     test.ID,
 		Method: test.Method,
 		Params: test.Params,
+	}
+
+	// If the expected result is a reference, include it as ref in the request
+	if ref := extractRefFromExpected(test.Expected); ref != "" {
+		req.Ref = ref
 	}
 
 	err := tr.SendRequest(req)
@@ -222,6 +244,19 @@ func validateResponseForError(test TestCase, resp *Response) error {
 		}
 	}
 	return nil
+}
+
+// extractRefFromExpected extracts a reference name from the expected result if it's a
+// string starting with "$". Returns empty string if not a reference.
+func extractRefFromExpected(expected TestExpectation) string {
+	var resultStr string
+	if err := json.Unmarshal(expected.Result, &resultStr); err != nil {
+		return ""
+	}
+	if len(resultStr) > 1 && resultStr[0] == '$' {
+		return resultStr
+	}
+	return ""
 }
 
 // validateResponseForSuccess validates that a response correctly represents a success case.

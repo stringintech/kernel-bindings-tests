@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -36,6 +37,9 @@ func main() {
 		fmt.Fprintf(os.Stderr, "No test files found\n")
 		os.Exit(1)
 	}
+
+	// Sort test files alphabetically for deterministic execution order
+	sort.Strings(testFiles)
 
 	// Create test runner
 	testRunner, err := runner.NewTestRunner(*handlerPath, *handlerTimeout, *timeout)
@@ -71,6 +75,12 @@ func main() {
 		totalPassed += result.PassedTests
 		totalFailed += result.FailedTests
 		totalTests += result.TotalTests
+
+		// Close handler after stateful suites to prevent state leaks.
+		// A new handler process will be spawned on-demand when the next request is sent.
+		if suite.Stateful {
+			testRunner.CloseHandler()
+		}
 	}
 
 	fmt.Printf("\n" + strings.Repeat("=", 60) + "\n")
