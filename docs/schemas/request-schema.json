@@ -1,0 +1,324 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://github.com/stringintech/kernel-bindings-tests/request-schema.json",
+    "title": "Bitcoin Kernel Bindings Test Handler Request",
+    "description": "JSON Schema for requests sent from the test runner to handlers via stdin",
+    "version": "0.0.3",
+    "$ref": "#/definitions/Request",
+    "definitions": {
+        "Request": {
+            "type": "object",
+            "description": "A request sent from the test runner to the handler via stdin",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Unique identifier for this request. The response must include the same id"
+                },
+                "method": {
+                    "type": "string",
+                    "description": "The method to invoke on the handler",
+                    "enum": [
+                        "btck_context_create",
+                        "btck_context_destroy",
+                        "btck_chainstate_manager_create",
+                        "btck_chainstate_manager_get_active_chain",
+                        "btck_chainstate_manager_process_block",
+                        "btck_chainstate_manager_destroy",
+                        "btck_chain_get_height",
+                        "btck_chain_get_by_height",
+                        "btck_chain_contains",
+                        "btck_block_create",
+                        "btck_block_tree_entry_get_block_hash",
+                        "btck_script_pubkey_verify"
+                    ]
+                },
+                "params": {
+                    "description": "Method-specific parameters",
+                    "oneOf": [
+                        {
+                            "$ref": "#/definitions/ContextCreateParams"
+                        },
+                        {
+                            "$ref": "#/definitions/ContextRefParams"
+                        },
+                        {
+                            "$ref": "#/definitions/ChainstateManagerRefParams"
+                        },
+                        {
+                            "$ref": "#/definitions/ChainstateManagerProcessBlockParams"
+                        },
+                        {
+                            "$ref": "#/definitions/ChainQueryParams"
+                        },
+                        {
+                            "$ref": "#/definitions/BlockCreateParams"
+                        },
+                        {
+                            "$ref": "#/definitions/BlockTreeEntryGetBlockHashParams"
+                        },
+                        {
+                            "$ref": "#/definitions/ScriptPubkeyVerifyParams"
+                        }
+                    ]
+                },
+                "ref": {
+                    "type": "string",
+                    "description": "Reference name for storing the returned object. Required for methods that return object references",
+                    "pattern": "^\\$"
+                }
+            },
+            "required": [
+                "id",
+                "method"
+            ]
+        },
+        "ContextCreateParams": {
+            "type": "object",
+            "description": "Parameters for btck_context_create method",
+            "properties": {
+                "chain_parameters": {
+                    "$ref": "#/definitions/ChainParameters"
+                }
+            },
+            "required": [
+                "chain_parameters"
+            ]
+        },
+        "ChainParameters": {
+            "type": "object",
+            "description": "Chain parameters for context creation",
+            "properties": {
+                "chain_type": {
+                    "$ref": "#/definitions/ChainType"
+                }
+            },
+            "required": [
+                "chain_type"
+            ]
+        },
+        "ChainType": {
+            "type": "string",
+            "description": "Chain type for context creation",
+            "enum": [
+                "btck_ChainType_MAINNET",
+                "btck_ChainType_TESTNET",
+                "btck_ChainType_TESTNET_4",
+                "btck_ChainType_SIGNET",
+                "btck_ChainType_REGTEST"
+            ]
+        },
+        "ScriptPubkeyVerifyParams": {
+            "type": "object",
+            "description": "Parameters for the btck_script_pubkey_verify method",
+            "properties": {
+                "script_pubkey": {
+                    "type": "string",
+                    "description": "The scriptPubKey of the output being spent, hex-encoded",
+                    "pattern": "^[0-9a-fA-F]*$"
+                },
+                "amount": {
+                    "type": "integer",
+                    "description": "The amount in satoshis of the output being spent",
+                    "minimum": 0
+                },
+                "tx_to": {
+                    "type": "string",
+                    "description": "The spending transaction, hex-encoded in raw format",
+                    "pattern": "^[0-9a-fA-F]*$"
+                },
+                "input_index": {
+                    "type": "integer",
+                    "description": "The index of the input in tx_to that is spending the output",
+                    "minimum": 0
+                },
+                "flags": {
+                    "description": "Script verification flags to apply. Can be an integer (combined flags) or an array of flag strings",
+                    "oneOf": [
+                        {
+                            "type": "integer",
+                            "description": "Combined flags as a single integer value",
+                            "minimum": 0
+                        },
+                        {
+                            "type": "array",
+                            "description": "Array of script verification flag strings",
+                            "items": {
+                                "$ref": "#/definitions/ScriptVerificationFlag"
+                            }
+                        }
+                    ]
+                },
+                "spent_outputs": {
+                    "type": "array",
+                    "description": "Array of all outputs being spent by this transaction. Required for Taproot verification",
+                    "items": {
+                        "$ref": "#/definitions/SpentOutput"
+                    }
+                }
+            },
+            "required": [
+                "script_pubkey",
+                "amount",
+                "tx_to",
+                "input_index",
+                "flags",
+                "spent_outputs"
+            ]
+        },
+        "ScriptVerificationFlag": {
+            "type": "string",
+            "description": "Script verification flags that control which rules are enforced during script execution",
+            "enum": [
+                "btck_ScriptVerificationFlags_P2SH",
+                "btck_ScriptVerificationFlags_DERSIG",
+                "btck_ScriptVerificationFlags_NULLDUMMY",
+                "btck_ScriptVerificationFlags_CHECKLOCKTIMEVERIFY",
+                "btck_ScriptVerificationFlags_CHECKSEQUENCEVERIFY",
+                "btck_ScriptVerificationFlags_WITNESS",
+                "btck_ScriptVerificationFlags_TAPROOT"
+            ]
+        },
+        "SpentOutput": {
+            "type": "object",
+            "description": "Information about a transaction output being spent",
+            "properties": {
+                "script_pubkey": {
+                    "type": "string",
+                    "description": "The scriptPubKey of the output, hex-encoded",
+                    "pattern": "^[0-9a-fA-F]*$"
+                },
+                "amount": {
+                    "type": "integer",
+                    "description": "The amount in satoshis",
+                    "minimum": 0
+                }
+            },
+            "required": [
+                "script_pubkey",
+                "amount"
+            ]
+        },
+        "ContextRefParams": {
+            "type": "object",
+            "description": "Parameters for methods that take a context reference (btck_context_destroy, btck_chainstate_manager_create)",
+            "properties": {
+                "context": {
+                    "type": "string",
+                    "description": "Context reference"
+                }
+            },
+            "required": [
+                "context"
+            ]
+        },
+        "ChainstateManagerRefParams": {
+            "type": "object",
+            "description": "Parameters for methods that take a chainstate manager reference (btck_chainstate_manager_get_active_chain, btck_chainstate_manager_destroy)",
+            "properties": {
+                "chainstate_manager": {
+                    "type": "string",
+                    "description": "Chainstate manager reference"
+                }
+            },
+            "required": [
+                "chainstate_manager"
+            ]
+        },
+        "ChainstateManagerProcessBlockParams": {
+            "type": "object",
+            "description": "Parameters for btck_chainstate_manager_process_block method",
+            "properties": {
+                "chainstate_manager": {
+                    "type": "string",
+                    "description": "Chainstate manager reference"
+                },
+                "block": {
+                    "type": "string",
+                    "description": "Block reference from btck_block_create"
+                }
+            },
+            "required": [
+                "chainstate_manager",
+                "block"
+            ]
+        },
+        "ChainQueryParams": {
+            "type": "object",
+            "description": "Parameters for chain methods (btck_chain_get_height, btck_chain_get_by_height, btck_chain_contains)",
+            "properties": {
+                "chain": {
+                    "type": "string",
+                    "description": "Chain reference from btck_chainstate_manager_get_active_chain"
+                },
+                "block_height": {
+                    "type": "integer",
+                    "description": "Height to query",
+                    "minimum": 0
+                },
+                "block_tree_entry": {
+                    "type": "string",
+                    "description": "Block tree entry reference to check"
+                }
+            },
+            "required": [
+                "chain"
+            ],
+            "oneOf": [
+                {
+                    "properties": {},
+                    "not": {
+                        "anyOf": [
+                            {
+                                "required": [
+                                    "block_height"
+                                ]
+                            },
+                            {
+                                "required": [
+                                    "block_tree_entry"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "required": [
+                        "block_height"
+                    ]
+                },
+                {
+                    "required": [
+                        "block_tree_entry"
+                    ]
+                }
+            ]
+        },
+        "BlockCreateParams": {
+            "type": "object",
+            "description": "Parameters for btck_block_create method",
+            "properties": {
+                "raw_block": {
+                    "type": "string",
+                    "description": "Hex-encoded raw block data",
+                    "pattern": "^[0-9a-fA-F]*$"
+                }
+            },
+            "required": [
+                "raw_block"
+            ]
+        },
+        "BlockTreeEntryGetBlockHashParams": {
+            "type": "object",
+            "description": "Parameters for btck_block_tree_entry_get_block_hash method",
+            "properties": {
+                "block_tree_entry": {
+                    "type": "string",
+                    "description": "Block tree entry reference from btck_chain_get_by_height"
+                }
+            },
+            "required": [
+                "block_tree_entry"
+            ]
+        }
+    }
+}
