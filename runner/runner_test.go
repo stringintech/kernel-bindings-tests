@@ -170,7 +170,7 @@ func TestValidateResponse(t *testing.T) {
 		{
 			name: "protocol violation with result not null when error present",
 			testCaseJSON: `{
-				"request": {"id": "11"},
+				"request": {"id": "10"},
 				"expected_response": {
 					"error": {
 						"code": {
@@ -195,7 +195,7 @@ func TestValidateResponse(t *testing.T) {
 		{
 			name: "error generic without code",
 			testCaseJSON: `{
-				"request": {"id": "12"},
+				"request": {"id": "11"},
 				"expected_response": {
 					"error": {}
 				}
@@ -205,6 +205,41 @@ func TestValidateResponse(t *testing.T) {
 				"error": {}
 			}`,
 			wantErr: false,
+		},
+		{
+			name: "ref object success",
+			testCaseJSON: `{
+				"request": {"id": "12", "ref": "$ctx1"},
+				"expected_response": {"result": {"ref": "$ctx1"}}
+			}`,
+			responseJSON: `{
+				"result": {"ref": "$ctx1"}
+			}`,
+			wantErr: false,
+		},
+		{
+			name: "ref object mismatch",
+			testCaseJSON: `{
+				"request": {"id": "13", "ref": "$ctx1"},
+				"expected_response": {"result": {"ref": "$ctx1"}}
+			}`,
+			responseJSON: `{
+				"result": {"ref": "$ctx2"}
+			}`,
+			wantErr:    true,
+			wantErrMsg: "reference mismatch",
+		},
+		{
+			name: "ref in request but response not a ref object",
+			testCaseJSON: `{
+				"request": {"id": "14", "ref": "$ctx1"},
+				"expected_response": {"result": {"ref": "$ctx1"}}
+			}`,
+			responseJSON: `{
+				"result": true
+			}`,
+			wantErr:    true,
+			wantErrMsg: "expected reference object result",
 		},
 	}
 

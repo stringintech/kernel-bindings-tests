@@ -254,6 +254,19 @@ func validateResponseForSuccess(test TestCase, resp *Response) error {
 		return fmt.Errorf("expected result with value, got null or omitted result")
 	}
 
+	// If the request has a ref field, validate that the response is a reference object
+	if test.Request.Ref != "" {
+		refValue, ok := ParseRefObject(resp.Result)
+		if !ok {
+			return fmt.Errorf("expected reference object result for request with ref field, got: %s", string(resp.Result))
+		}
+		if refValue != test.Request.Ref {
+			return fmt.Errorf("reference mismatch: expected ref %q, got %q", test.Request.Ref, refValue)
+		}
+		return nil
+	}
+
+	// For non-ref results, normalize and compare
 	expectedNorm, err := test.ExpectedResponse.Result.Normalize()
 	if err != nil {
 		return fmt.Errorf("failed to normalize expected result: %w", err)

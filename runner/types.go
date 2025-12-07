@@ -30,6 +30,9 @@ type Request struct {
 	ID     string          `json:"id"`
 	Method string          `json:"method"`
 	Params json.RawMessage `json:"params,omitempty"`
+	// Ref specifies the name the handler should use to store the returned object reference
+	// in its registry. Required for methods that return object handles.
+	Ref string `json:"ref,omitempty"`
 }
 
 // Response represents a response from the handler.
@@ -81,4 +84,23 @@ func (r Result) Normalize() (string, error) {
 		return "", err
 	}
 	return string(normalized), nil
+}
+
+// RefObject represents a reference type result structure.
+type RefObject struct {
+	Ref string `json:"ref"`
+}
+
+// ParseRefObject extracts the ref value from a reference object.
+// Returns the ref string and true if the result is a valid ref object,
+// or empty string and false otherwise.
+func ParseRefObject[T ~[]byte](r T) (string, bool) {
+	var refObj RefObject
+	if err := json.Unmarshal(r, &refObj); err != nil {
+		return "", false
+	}
+	if refObj.Ref == "" {
+		return "", false
+	}
+	return refObj.Ref, true
 }
