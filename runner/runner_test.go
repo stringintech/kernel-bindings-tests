@@ -17,11 +17,10 @@ func TestValidateResponse(t *testing.T) {
 		{
 			name: "success with boolean result",
 			testCaseJSON: `{
-				"id": "1",
-				"expected": {"result": true}
+				"request": {"id": "1"},
+				"expected_response": {"result": true}
 			}`,
 			responseJSON: `{
-				"id": "1",
 				"result": true
 			}`,
 			wantErr: false,
@@ -29,11 +28,10 @@ func TestValidateResponse(t *testing.T) {
 		{
 			name: "success with null result explicit",
 			testCaseJSON: `{
-				"id": "2",
-				"expected": {}
+				"request": {"id": "2"},
+				"expected_response": {}
 			}`,
 			responseJSON: `{
-				"id": "2",
 				"result": null
 			}`,
 			wantErr: false,
@@ -41,19 +39,18 @@ func TestValidateResponse(t *testing.T) {
 		{
 			name: "success with null result omitted",
 			testCaseJSON: `{
-				"id": "3",
-				"expected": {}
+				"request": {"id": "3"},
+				"expected_response": {}
 			}`,
 			responseJSON: `{
-				"id": "3"
 			}`,
 			wantErr: false,
 		},
 		{
 			name: "error exact match",
 			testCaseJSON: `{
-				"id": "4",
-				"expected": {
+				"request": {"id": "4"},
+				"expected_response": {
 					"error": {
 						"code": {
 							"type": "type",
@@ -63,7 +60,6 @@ func TestValidateResponse(t *testing.T) {
 				}
 			}`,
 			responseJSON: `{
-				"id": "4",
 				"result": null,
 				"error": {
 					"code": {
@@ -77,8 +73,8 @@ func TestValidateResponse(t *testing.T) {
 		{
 			name: "error type mismatch",
 			testCaseJSON: `{
-				"id": "5",
-				"expected": {
+				"request": {"id": "5"},
+				"expected_response": {
 					"error": {
 						"code": {
 							"type": "type",
@@ -88,7 +84,6 @@ func TestValidateResponse(t *testing.T) {
 				}
 			}`,
 			responseJSON: `{
-				"id": "5",
 				"error": {
 					"code": {
 						"type": "different_type",
@@ -102,8 +97,8 @@ func TestValidateResponse(t *testing.T) {
 		{
 			name: "error member mismatch",
 			testCaseJSON: `{
-				"id": "6",
-				"expected": {
+				"request": {"id": "6"},
+				"expected_response": {
 					"error": {
 						"code": {
 							"type": "type",
@@ -113,7 +108,6 @@ func TestValidateResponse(t *testing.T) {
 				}
 			}`,
 			responseJSON: `{
-				"id": "6",
 				"error": {
 					"code": {
 						"type": "type",
@@ -127,11 +121,10 @@ func TestValidateResponse(t *testing.T) {
 		{
 			name: "expected success got error",
 			testCaseJSON: `{
-				"id": "7",
-				"expected": {"result": true}
+				"request": {"id": "7"},
+				"expected_response": {"result": true}
 			}`,
 			responseJSON: `{
-				"id": "7",
 				"result": null,
 				"error": {
 					"code": {
@@ -146,8 +139,8 @@ func TestValidateResponse(t *testing.T) {
 		{
 			name: "expected error got success",
 			testCaseJSON: `{
-				"id": "8",
-				"expected": {
+				"request": {"id": "8"},
+				"expected_response": {
 					"error": {
 						"code": {
 							"type": "type",
@@ -157,7 +150,6 @@ func TestValidateResponse(t *testing.T) {
 				}
 			}`,
 			responseJSON: `{
-				"id": "8",
 				"result": true
 			}`,
 			wantErr:    true,
@@ -166,34 +158,20 @@ func TestValidateResponse(t *testing.T) {
 		{
 			name: "result value mismatch",
 			testCaseJSON: `{
-				"id": "9",
-				"expected": {"result": true}
+				"request": {"id": "9"},
+				"expected_response": {"result": true}
 			}`,
 			responseJSON: `{
-				"id": "9",
 				"result": false
 			}`,
 			wantErr:    true,
 			wantErrMsg: "result mismatch",
 		},
 		{
-			name: "response ID mismatch",
-			testCaseJSON: `{
-				"id": "10",
-				"expected": {"result": true}
-			}`,
-			responseJSON: `{
-				"id": "99",
-				"result": true
-			}`,
-			wantErr:    true,
-			wantErrMsg: "response ID mismatch",
-		},
-		{
 			name: "protocol violation with result not null when error present",
 			testCaseJSON: `{
-				"id": "11",
-				"expected": {
+				"request": {"id": "11"},
+				"expected_response": {
 					"error": {
 						"code": {
 							"type": "type",
@@ -203,7 +181,6 @@ func TestValidateResponse(t *testing.T) {
 				}
 			}`,
 			responseJSON: `{
-				"id": "11",
 				"result": true,
 				"error": {
 					"code": {
@@ -218,13 +195,12 @@ func TestValidateResponse(t *testing.T) {
 		{
 			name: "error generic without code",
 			testCaseJSON: `{
-				"id": "12",
-				"expected": {
+				"request": {"id": "12"},
+				"expected_response": {
 					"error": {}
 				}
 			}`,
 			responseJSON: `{
-				"id": "12",
 				"result": null,
 				"error": {}
 			}`,

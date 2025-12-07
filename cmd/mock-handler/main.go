@@ -53,7 +53,9 @@ func buildTestIndex() (map[string]string, error) {
 		// Parse just enough to get test IDs
 		var suite struct {
 			Tests []struct {
-				ID string `json:"id"`
+				Request struct {
+					ID string `json:"id"`
+				} `json:"request"`
 			} `json:"tests"`
 		}
 		if err := json.Unmarshal(data, &suite); err != nil {
@@ -61,7 +63,7 @@ func buildTestIndex() (map[string]string, error) {
 		}
 
 		for _, test := range suite.Tests {
-			index[test.ID] = testFile
+			index[test.Request.ID] = testFile
 		}
 	}
 
@@ -79,7 +81,6 @@ func handleRequest(line string, testIndex map[string]string) error {
 	filename, ok := testIndex[req.ID]
 	if !ok {
 		resp := runner.Response{
-			ID: req.ID,
 			Error: &runner.Error{
 				Code: &runner.ErrorCode{
 					Type:   "Handler",
@@ -94,7 +95,6 @@ func handleRequest(line string, testIndex map[string]string) error {
 	suite, err := runner.LoadTestSuiteFromFS(testdata.FS, filename)
 	if err != nil {
 		resp := runner.Response{
-			ID: req.ID,
 			Error: &runner.Error{
 				Code: &runner.ErrorCode{
 					Type:   "Handler",
@@ -108,14 +108,13 @@ func handleRequest(line string, testIndex map[string]string) error {
 	// Find the specific test case
 	var testCase *runner.TestCase
 	for _, test := range suite.Tests {
-		if test.ID == req.ID {
+		if test.Request.ID == req.ID {
 			testCase = &test
 			break
 		}
 	}
 	if testCase == nil {
 		resp := runner.Response{
-			ID: req.ID,
 			Error: &runner.Error{
 				Code: &runner.ErrorCode{
 					Type:   "Handler",
@@ -127,9 +126,8 @@ func handleRequest(line string, testIndex map[string]string) error {
 	}
 
 	// Verify method matches
-	if req.Method != testCase.Method {
+	if req.Method != testCase.Request.Method {
 		resp := runner.Response{
-			ID: req.ID,
 			Error: &runner.Error{
 				Code: &runner.ErrorCode{
 					Type:   "Handler",
@@ -142,9 +140,8 @@ func handleRequest(line string, testIndex map[string]string) error {
 
 	// Build response based on expected result
 	return writeResponse(runner.Response{
-		ID:     req.ID,
-		Result: testCase.Expected.Result,
-		Error:  testCase.Expected.Error,
+		Result: testCase.ExpectedResponse.Result,
+		Error:  testCase.ExpectedResponse.Error,
 	})
 }
 

@@ -6,19 +6,9 @@ import (
 
 // TestCase represents a single test case
 type TestCase struct {
-	ID          string          `json:"id"`
-	Description string          `json:"description,omitempty"`
-	Method      string          `json:"method"`
-	Params      json.RawMessage `json:"params"`
-	Expected    TestExpectation `json:"expected"`
-}
-
-// TestExpectation defines what response is expected.
-// If expecting success, result contains the expected value (or null for void/nullptr) and error must be null.
-// If expecting failure, result must be null and error contains the expected error details.
-type TestExpectation struct {
-	Result Result `json:"result"`          // Expected return value (null for void/nullptr/error cases)
-	Error  *Error `json:"error,omitempty"` // Expected error (null for success cases)
+	Description      string   `json:"description,omitempty"`
+	Request          Request  `json:"request"`
+	ExpectedResponse Response `json:"expected_response"`
 }
 
 // TestSuite represents a collection of test cases
@@ -32,14 +22,13 @@ type TestSuite struct {
 type Request struct {
 	ID     string          `json:"id"`
 	Method string          `json:"method"`
-	Params json.RawMessage `json:"params"`
+	Params json.RawMessage `json:"params,omitempty"`
 }
 
 // Response represents a response from the handler.
 // If the operation succeeds, result contains the return value (or null for void/nullptr) and error must be null.
 // If the operation fails, result must be null and error contains error details.
 type Response struct {
-	ID     string `json:"id"`
 	Result Result `json:"result"`          // Return value (null for void/nullptr/error cases)
 	Error  *Error `json:"error,omitempty"` // Error details (null for success cases)
 }
