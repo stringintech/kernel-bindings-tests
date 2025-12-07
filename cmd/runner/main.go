@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"io/fs"
 	"os"
@@ -10,19 +9,29 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/pflag"
 	"github.com/stringintech/kernel-bindings-tests/runner"
 	"github.com/stringintech/kernel-bindings-tests/testdata"
 )
 
 func main() {
-	handlerPath := flag.String("handler", "", "Path to handler binary")
-	handlerTimeout := flag.Duration("handler-timeout", 10*time.Second, "Max time to wait for handler to respond to each test case (e.g., 10s, 500ms)")
-	timeout := flag.Duration("timeout", 30*time.Second, "Total timeout for executing all test suites (e.g., 30s, 1m)")
-	flag.Parse()
+	handlerPath := pflag.String("handler", "", "Path to handler binary")
+	handlerTimeout := pflag.Duration("handler-timeout", 10*time.Second, "Max time to wait for handler to respond to each test case (e.g., 10s, 500ms)")
+	timeout := pflag.Duration("timeout", 30*time.Second, "Total timeout for executing all test suites (e.g., 30s, 1m)")
+	verboseCount := pflag.CountP("verbose", "v", "Verbose mode: -v shows all requests needed to reproduce failed tests, plus received/expected responses; -vv shows this for all tests (passed and failed)")
+	pflag.Parse()
+
+	// Convert verbose count to verbosity level
+	verbosity := runner.VerbosityQuiet
+	if *verboseCount >= 2 {
+		verbosity = runner.VerbosityAlways
+	} else if *verboseCount == 1 {
+		verbosity = runner.VerbosityOnFailure
+	}
 
 	if *handlerPath == "" {
-		fmt.Fprintf(os.Stderr, "Error: -handler flag is required\n")
-		flag.Usage()
+		fmt.Fprintf(os.Stderr, "Error: --handler flag is required\n")
+		pflag.Usage()
 		os.Exit(1)
 	}
 
@@ -69,7 +78,7 @@ func main() {
 		}
 
 		// Run suite
-		result := testRunner.RunTestSuite(ctx, *suite)
+		result := testRunner.RunTestSuite(ctx, *suite, verbosity)
 		printResults(suite, result)
 
 		totalPassed += result.PassedTests

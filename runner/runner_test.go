@@ -220,7 +220,7 @@ func TestValidateResponse(t *testing.T) {
 				t.Fatalf("failed to unmarshal response: %v", err)
 			}
 
-			err := validateResponse(testCase, &response)
+			err := validateResponse(&testCase, &response)
 
 			if tt.wantErr {
 				if err == nil {

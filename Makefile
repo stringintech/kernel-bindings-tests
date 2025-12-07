@@ -22,7 +22,7 @@ test:
 	@echo "Running runner unit tests..."
 	go test -v ./runner/...
 	@echo "Running conformance tests with mock handler..."
-	$(RUNNER_BIN) -handler $(MOCK_HANDLER_BIN)
+	$(RUNNER_BIN) --handler $(MOCK_HANDLER_BIN) -vv
 
 clean:
 	@echo "Cleaning build artifacts..."

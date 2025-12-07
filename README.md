@@ -66,6 +66,38 @@ make runner
 
 The runner automatically detects and recovers from crashed/unresponsive handlers, allowing remaining tests to continue.
 
+#### Verbose Flags
+
+- **`-v, --verbose`**: Shows request chains and responses for **failed tests only**
+- **`-vv`**: Shows request chains and responses for **all tests** (passed and failed)
+
+The request chains printed by verbose mode can be directly piped to the handler binary for manual debugging:
+
+```bash
+# Example output from -vv mode:
+# ✓ chain#4 (Get active chain reference from chainstate manager)
+#
+#       Request chain
+#       ────────────────────────────────────────
+# {"id":"chain#1","method":"btck_context_create","params":{"chain_parameters":{"chain_type":"btck_ChainType_REGTEST"}},"ref":"$context_ref"}
+# {"id":"chain#2","method":"btck_chainstate_manager_create","params":{"context":"$context_ref"},"ref":"$chainstate_manager_ref"}
+# {"id":"chain#4","method":"btck_chainstate_manager_get_active_chain","params":{"chainstate_manager":"$chainstate_manager_ref"},"ref":"$chain_ref"}
+#
+#       Response:
+#       ────────────────────────────────────────
+#       {"result":"$chain_ref"}
+
+# Copy the request chain and pipe it to your handler for debugging:
+echo '{"id":"chain#1","method":"btck_context_create","params":{"chain_parameters":{"chain_type":"btck_ChainType_REGTEST"}},"ref":"$context_ref"}
+{"id":"chain#2","method":"btck_chainstate_manager_create","params":{"context":"$context_ref"},"ref":"$chainstate_manager_ref"}
+{"id":"chain#4","method":"btck_chainstate_manager_get_active_chain","params":{"chainstate_manager":"$chainstate_manager_ref"},"ref":"$chain_ref"}' | ./path/to/your/handler
+```
+
+This is particularly useful for:
+- Reproducing test failures independently
+- Debugging handler behavior without running the full test suite
+- Testing individual operations in isolation
+
 ### Testing the Runner
 
 Build and test the runner:

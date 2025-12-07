@@ -9,7 +9,21 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"time"
+)
+
+// VerbosityLevel represents different levels of test output verbosity
+type VerbosityLevel int
+
+const (
+	// VerbosityQuiet shows minimal output (only test results)
+	VerbosityQuiet VerbosityLevel = iota
+	// VerbosityOnFailure shows detailed output for failed tests only
+	VerbosityOnFailure
+	// VerbosityAlways shows detailed output for all tests
+	VerbosityAlways
 )
 
 // TestRunner executes test suites against a handler binary
@@ -100,7 +114,11 @@ func (tr *TestRunner) CloseHandler() {
 
 // RunTestSuite executes a test suite. The context can be used to enforce a total
 // execution timeout across all test suites.
-func (tr *TestRunner) RunTestSuite(ctx context.Context, suite TestSuite) TestResult {
+// The verbosity parameter controls output detail.
+func (tr *TestRunner) RunTestSuite(ctx context.Context, suite TestSuite, verbosity VerbosityLevel) TestResult {
+	// Create dependency tracker to manage test dependencies and build request chains
+	depTracker := NewDependencyTracker()
+
 	result := TestResult{
 		SuiteName:  suite.Name,
 		TotalTests: len(suite.Tests),
@@ -108,20 +126,44 @@ func (tr *TestRunner) RunTestSuite(ctx context.Context, suite TestSuite) TestRes
 
 	skipTests := false
 
-	for _, test := range suite.Tests {
-		var testResult SingleTestResult
+	for i := range suite.Tests {
+		test := &suite.Tests[i]
 
-		if !skipTests {
-			testResult = tr.runTest(ctx, test)
-		} else {
+		// Run the test case
+		var testResult SingleTestResult
+		if skipTests {
 			// In stateful suites, if any previous test failed, fail all subsequent tests
 			testResult = SingleTestResult{
 				TestID:  test.Request.ID,
 				Passed:  false,
 				Message: "Skipped due to previous test failure in stateful suite",
 			}
+		} else {
+			// Build dependency chain by analyzing which refs this test uses
+			if verbosity != VerbosityQuiet {
+				depTracker.BuildDependenciesForTest(i, test)
+			}
+
+			// Execute the test against the handler
+			testResult = tr.runTest(ctx, test)
+
+			// Add verbose output if requested or on failure
+			if (verbosity == VerbosityAlways) || (verbosity == VerbosityOnFailure && !testResult.Passed) {
+				requestChain := depTracker.BuildRequestChain(i, suite.Tests)
+				verboseOutput := formatVerboseOutput(suite.Tests, i, requestChain, &testResult)
+				if testResult.Message != "" {
+					testResult.Message = fmt.Sprintf("%s\n%s", testResult.Message, verboseOutput)
+				} else {
+					testResult.Message = verboseOutput
+				}
+			}
+
+			if verbosity != VerbosityQuiet {
+				depTracker.OnTestExecuted(i, test)
+			}
 		}
 
+		// Collect test case result
 		result.TestResults = append(result.TestResults, testResult)
 		if testResult.Passed {
 			result.PassedTests++
@@ -138,7 +180,7 @@ func (tr *TestRunner) RunTestSuite(ctx context.Context, suite TestSuite) TestRes
 
 // runTest executes a single test case by sending a request, reading the response,
 // and validating the result matches expected output
-func (tr *TestRunner) runTest(ctx context.Context, test TestCase) SingleTestResult {
+func (tr *TestRunner) runTest(ctx context.Context, test *TestCase) SingleTestResult {
 	// Check if context is already cancelled
 	select {
 	case <-ctx.Done():
@@ -170,20 +212,23 @@ func (tr *TestRunner) runTest(ctx context.Context, test TestCase) SingleTestResu
 
 	if err := validateResponse(test, resp); err != nil {
 		return SingleTestResult{
-			TestID:  test.Request.ID,
-			Passed:  false,
-			Message: fmt.Sprintf("Invalid response: %s", err.Error()),
+			TestID:           test.Request.ID,
+			Passed:           false,
+			Message:          fmt.Sprintf("Invalid response: %s", err.Error()),
+			ReceivedResponse: resp,
 		}
 	}
+
 	return SingleTestResult{
-		TestID: test.Request.ID,
-		Passed: true,
+		TestID:           test.Request.ID,
+		Passed:           true,
+		ReceivedResponse: resp,
 	}
 }
 
 // validateResponse validates that a response matches the expected test outcome.
 // Returns an error if the response does not match the expected outcome (error or success).
-func validateResponse(test TestCase, resp *Response) error {
+func validateResponse(test *TestCase, resp *Response) error {
 	if test.ExpectedResponse.Error != nil {
 		return validateResponseForError(test, resp)
 	}
@@ -194,7 +239,7 @@ func validateResponse(test TestCase, resp *Response) error {
 // validateResponseForError validates that a response correctly represents an error case.
 // It ensures the response contains an error, the result is null or omitted, and if an
 // error code is expected, it matches the expected type and member.
-func validateResponseForError(test TestCase, resp *Response) error {
+func validateResponseForError(test *TestCase, resp *Response) error {
 	if test.ExpectedResponse.Error == nil {
 		panic("validateResponseForError expects non-nil error")
 	}
@@ -228,23 +273,10 @@ func validateResponseForError(test TestCase, resp *Response) error {
 	return nil
 }
 
-// extractRefFromExpected extracts a reference name from the expected result if it's a
-// string starting with "$". Returns empty string if not a reference.
-func extractRefFromExpected(expected Response) string {
-	var resultStr string
-	if err := json.Unmarshal(expected.Result, &resultStr); err != nil {
-		return ""
-	}
-	if len(resultStr) > 1 && resultStr[0] == '$' {
-		return resultStr
-	}
-	return ""
-}
-
 // validateResponseForSuccess validates that a response correctly represents a success case.
 // It ensures the response contains no error, and if a result is expected, it matches the
 // expected value.
-func validateResponseForSuccess(test TestCase, resp *Response) error {
+func validateResponseForSuccess(test *TestCase, resp *Response) error {
 	if test.ExpectedResponse.Error != nil {
 		panic("validateResponseForSuccess expects nil error")
 	}
@@ -294,9 +326,10 @@ type TestResult struct {
 
 // SingleTestResult contains the result of a single test
 type SingleTestResult struct {
-	TestID  string
-	Passed  bool
-	Message string
+	TestID           string
+	Passed           bool
+	Message          string
+	ReceivedResponse *Response // The actual response received from the handler
 }
 
 // LoadTestSuiteFromFS loads a test suite from an embedded filesystem
@@ -317,4 +350,74 @@ func LoadTestSuiteFromFS(fsys embed.FS, filePath string) (*TestSuite, error) {
 	}
 
 	return &suite, nil
+}
+
+// formatVerboseOutput formats the complete verbose output including requestChain,
+// received response, and expected response for a test
+func formatVerboseOutput(allTests []TestCase, testIdx int, requestChain []int, testResult *SingleTestResult) string {
+	var result strings.Builder
+
+	// Add request chain header
+	result.WriteString("\n")
+	result.WriteString("      Request chain\n")
+	result.WriteString("      ────────────────────────────────────────\n")
+
+	// Build requests for all dependencies
+	for _, depIdx := range requestChain {
+		reqJSON, err := json.Marshal(allTests[depIdx].Request)
+		if err == nil {
+			result.WriteString(string(reqJSON))
+			result.WriteString("\n")
+		}
+	}
+
+	// Add the current test request
+	reqJSON, err := json.Marshal(allTests[testIdx].Request)
+	if err == nil {
+		result.WriteString(string(reqJSON))
+		result.WriteString("\n")
+	}
+
+	if testResult.Passed {
+		// When test passes, only show expected response
+		result.WriteString("\n      Response:\n")
+		result.WriteString("      ────────────────────────────────────────\n")
+	} else {
+		// When test fails, show both received and expected responses
+		// Add received response
+		result.WriteString("\n      Received response\n")
+		result.WriteString("      ────────────────────────────────────────\n")
+		if testResult.ReceivedResponse != nil {
+			respJSON, err := json.Marshal(testResult.ReceivedResponse)
+			if err == nil {
+				result.WriteString("      ")
+				result.WriteString(string(respJSON))
+				result.WriteString("\n")
+			}
+		} else {
+			result.WriteString("      (no response received)\n")
+		}
+
+		// Add expected response header
+		result.WriteString("\n      Expected response\n")
+		result.WriteString("      ────────────────────────────────────────\n")
+	}
+
+	expectedJSON, err := json.Marshal(allTests[testIdx].ExpectedResponse)
+	if err == nil {
+		result.WriteString("      ")
+		result.WriteString(string(expectedJSON))
+		result.WriteString("\n")
+	}
+
+	result.WriteString("\n")
+	return result.String()
+}
+
+// mergeSortedUnique returns a sorted array containing unique values from all input arrays.
+// NOTE: Since each input array is already sorted, this can be optimized using k-way merge if needed.
+func mergeSortedUnique(arrays ...[]int) []int {
+	merged := slices.Concat(arrays...)
+	slices.Sort(merged)
+	return slices.Compact(merged)
 }
