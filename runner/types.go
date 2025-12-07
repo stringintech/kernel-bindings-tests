@@ -30,6 +30,9 @@ type Request struct {
 	ID     string          `json:"id"`
 	Method string          `json:"method"`
 	Params json.RawMessage `json:"params,omitempty"`
+	// Ref specifies the name the handler should use to store the returned object reference
+	// in its registry. Required for methods that return object handles (e.g., "$ctx1", "$csm1").
+	Ref string `json:"ref,omitempty"`
 }
 
 // Response represents a response from the handler.

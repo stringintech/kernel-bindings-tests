@@ -228,6 +228,19 @@ func validateResponseForError(test TestCase, resp *Response) error {
 	return nil
 }
 
+// extractRefFromExpected extracts a reference name from the expected result if it's a
+// string starting with "$". Returns empty string if not a reference.
+func extractRefFromExpected(expected Response) string {
+	var resultStr string
+	if err := json.Unmarshal(expected.Result, &resultStr); err != nil {
+		return ""
+	}
+	if len(resultStr) > 1 && resultStr[0] == '$' {
+		return resultStr
+	}
+	return ""
+}
+
 // validateResponseForSuccess validates that a response correctly represents a success case.
 // It ensures the response contains no error, and if a result is expected, it matches the
 // expected value.
