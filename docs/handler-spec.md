@@ -30,7 +30,6 @@ Handlers communicate with the test runner via **stdin/stdout**:
 
 ```json
 {
-  "id": "unique-request-id",
   "result": null,
   "error": {
     "code": {
@@ -42,7 +41,6 @@ Handlers communicate with the test runner via **stdin/stdout**:
 ```
 
 **Fields:**
-- `id` (string, required): Must match the request ID
 - `result` (any, optional): The return value, or `null` for void/nullptr operations. Must be `null` on error
 - `error` (object, optional): Error details. Must be `null` on success. An empty object `{}` is used to indicate an error is raised without further details, it is NOT equivalent to `null`
   - `code` (object, optional): Error code details
@@ -55,9 +53,8 @@ Handlers communicate with the test runner via **stdin/stdout**:
 
 1. **Input Processing**: Read JSON requests line-by-line from stdin
 2. **Response Order**: Responses must match request order (process sequentially)
-3. **ID Matching**: Response `id` must exactly match the request `id`
-4. **Error Handling**: Return error responses for invalid requests or failed operations
-5. **Exit Behavior**: Exit cleanly when stdin closes
+3. **Error Handling**: Return error responses for invalid requests or failed operations
+4. **Exit Behavior**: Exit cleanly when stdin closes
 
 ## Test Suites and Expected Responses
 
@@ -73,14 +70,12 @@ Test cases where the script verification operation executes successfully and ret
 **Expected Response Format:**
 ```json
 {
-  "id": "test-id",
   "result": true
 }
 ```
 or
 ```json
 {
-  "id": "test-id",
   "result": false
 }
 ```
@@ -95,7 +90,6 @@ Test cases where the verification operation fails to determine validity of the s
 **Expected Response Format:**
 ```json
 {
-  "id": "test-id",
   "result": null,
   "error": {
     "code": {

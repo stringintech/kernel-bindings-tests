@@ -3,23 +3,27 @@
   "description": "Test cases where the verification operation fails to determine validity of the script due to bad user input",
   "tests": [
     {
-      "id": "error_invalid_flags_combination",
       "description": "VERIFY_WITNESS flag requires P2SH flag to be set as well",
-      "method": "btck_script_pubkey_verify",
-      "params": {
-        "script_pubkey": "76a9144bfbaf6afb76cc5771bc6404810d1cc041a6933988ac",
-        "amount": 0,
-        "tx_to": "02000000013f7cebd65c27431a90bba7f796914fe8cc2ddfc3f2cbd6f7e5f2fc854534da95000000006b483045022100de1ac3bcdfb0332207c4a91f3832bd2c2915840165f876ab47c5f8996b971c3602201c6c053d750fadde599e6f5c4e1963df0f01fc0d97815e8157e3d59fe09ca30d012103699b464d1d8bc9e47d4fb1cdaa89a1c5783d68363c4dbc4b524ed3d857148617feffffff02836d3c01000000001976a914fc25d6d5c94003bf5b0c7b640a248e2c637fcfb088ac7ada8202000000001976a914fbed3d9b11183209a57999d54d59f67c019e756c88ac6acb0700",
-        "input_index": 0,
-        "flags": ["btck_ScriptVerificationFlags_WITNESS"],
-        "spent_outputs": [
-          {
-            "script_pubkey": "76a9144bfbaf6afb76cc5771bc6404810d1cc041a6933988ac",
-            "amount": 100000
-          }
-        ]
+      "request": {
+        "id": "error_invalid_flags_combination",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": "76a9144bfbaf6afb76cc5771bc6404810d1cc041a6933988ac",
+          "amount": 0,
+          "tx_to": "02000000013f7cebd65c27431a90bba7f796914fe8cc2ddfc3f2cbd6f7e5f2fc854534da95000000006b483045022100de1ac3bcdfb0332207c4a91f3832bd2c2915840165f876ab47c5f8996b971c3602201c6c053d750fadde599e6f5c4e1963df0f01fc0d97815e8157e3d59fe09ca30d012103699b464d1d8bc9e47d4fb1cdaa89a1c5783d68363c4dbc4b524ed3d857148617feffffff02836d3c01000000001976a914fc25d6d5c94003bf5b0c7b640a248e2c637fcfb088ac7ada8202000000001976a914fbed3d9b11183209a57999d54d59f67c019e756c88ac6acb0700",
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_WITNESS"
+          ],
+          "spent_outputs": [
+            {
+              "script_pubkey": "76a9144bfbaf6afb76cc5771bc6404810d1cc041a6933988ac",
+              "amount": 100000
+            }
+          ]
+        }
       },
-      "expected": {
+      "expected_response": {
         "error": {
           "code": {
             "type": "btck_ScriptVerifyStatus",
@@ -29,18 +33,22 @@
       }
     },
     {
-      "id": "error_spent_outputs_required",
       "description": "Taproot verification requires spent outputs to be provided",
-      "method": "btck_script_pubkey_verify",
-      "params": {
-        "script_pubkey": "76a9144bfbaf6afb76cc5771bc6404810d1cc041a6933988ac",
-        "amount": 0,
-        "tx_to": "02000000013f7cebd65c27431a90bba7f796914fe8cc2ddfc3f2cbd6f7e5f2fc854534da95000000006b483045022100de1ac3bcdfb0332207c4a91f3832bd2c2915840165f876ab47c5f8996b971c3602201c6c053d750fadde599e6f5c4e1963df0f01fc0d97815e8157e3d59fe09ca30d012103699b464d1d8bc9e47d4fb1cdaa89a1c5783d68363c4dbc4b524ed3d857148617feffffff02836d3c01000000001976a914fc25d6d5c94003bf5b0c7b640a248e2c637fcfb088ac7ada8202000000001976a914fbed3d9b11183209a57999d54d59f67c019e756c88ac6acb0700",
-        "input_index": 0,
-        "flags": ["btck_ScriptVerificationFlags_TAPROOT"],
-        "spent_outputs": []
+      "request": {
+        "id": "error_spent_outputs_required",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": "76a9144bfbaf6afb76cc5771bc6404810d1cc041a6933988ac",
+          "amount": 0,
+          "tx_to": "02000000013f7cebd65c27431a90bba7f796914fe8cc2ddfc3f2cbd6f7e5f2fc854534da95000000006b483045022100de1ac3bcdfb0332207c4a91f3832bd2c2915840165f876ab47c5f8996b971c3602201c6c053d750fadde599e6f5c4e1963df0f01fc0d97815e8157e3d59fe09ca30d012103699b464d1d8bc9e47d4fb1cdaa89a1c5783d68363c4dbc4b524ed3d857148617feffffff02836d3c01000000001976a914fc25d6d5c94003bf5b0c7b640a248e2c637fcfb088ac7ada8202000000001976a914fbed3d9b11183209a57999d54d59f67c019e756c88ac6acb0700",
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_TAPROOT"
+          ],
+          "spent_outputs": []
+        }
       },
-      "expected": {
+      "expected_response": {
         "error": {
           "code": {
             "type": "btck_ScriptVerifyStatus",

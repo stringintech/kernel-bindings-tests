@@ -126,23 +126,17 @@ func (tr *TestRunner) runTest(ctx context.Context, test TestCase) SingleTestResu
 	select {
 	case <-ctx.Done():
 		return SingleTestResult{
-			TestID:  test.ID,
+			TestID:  test.Request.ID,
 			Passed:  false,
 			Message: fmt.Sprintf("Total execution timeout exceeded (%v)", tr.timeout),
 		}
 	default:
 	}
 
-	req := Request{
-		ID:     test.ID,
-		Method: test.Method,
-		Params: test.Params,
-	}
-
-	err := tr.SendRequest(req)
+	err := tr.SendRequest(test.Request)
 	if err != nil {
 		return SingleTestResult{
-			TestID:  test.ID,
+			TestID:  test.Request.ID,
 			Passed:  false,
 			Message: fmt.Sprintf("Failed to send request: %v", err),
 		}
@@ -151,7 +145,7 @@ func (tr *TestRunner) runTest(ctx context.Context, test TestCase) SingleTestResu
 	resp, err := tr.ReadResponse()
 	if err != nil {
 		return SingleTestResult{
-			TestID:  test.ID,
+			TestID:  test.Request.ID,
 			Passed:  false,
 			Message: fmt.Sprintf("Failed to read response: %v", err),
 		}
@@ -159,28 +153,21 @@ func (tr *TestRunner) runTest(ctx context.Context, test TestCase) SingleTestResu
 
 	if err := validateResponse(test, resp); err != nil {
 		return SingleTestResult{
-			TestID:  test.ID,
+			TestID:  test.Request.ID,
 			Passed:  false,
 			Message: fmt.Sprintf("Invalid response: %s", err.Error()),
 		}
 	}
 	return SingleTestResult{
-		TestID: test.ID,
+		TestID: test.Request.ID,
 		Passed: true,
 	}
 }
 
 // validateResponse validates that a response matches the expected test outcome.
-// Returns an error if:
-//
-//	Response ID does not match the request ID
-//	Response does not match the expected outcome (error or success)
+// Returns an error if the response does not match the expected outcome (error or success).
 func validateResponse(test TestCase, resp *Response) error {
-	if resp.ID != test.ID {
-		return fmt.Errorf("response ID mismatch: expected %s, got %s", test.ID, resp.ID)
-	}
-
-	if test.Expected.Error != nil {
+	if test.ExpectedResponse.Error != nil {
 		return validateResponseForError(test, resp)
 	}
 
@@ -191,14 +178,14 @@ func validateResponse(test TestCase, resp *Response) error {
 // It ensures the response contains an error, the result is null or omitted, and if an
 // error code is expected, it matches the expected type and member.
 func validateResponseForError(test TestCase, resp *Response) error {
-	if test.Expected.Error == nil {
+	if test.ExpectedResponse.Error == nil {
 		panic("validateResponseForError expects non-nil error")
 	}
 
 	if resp.Error == nil {
-		if test.Expected.Error.Code != nil {
+		if test.ExpectedResponse.Error.Code != nil {
 			return fmt.Errorf("expected error %s.%s, but got no error",
-				test.Expected.Error.Code.Type, test.Expected.Error.Code.Member)
+				test.ExpectedResponse.Error.Code.Type, test.ExpectedResponse.Error.Code.Member)
 		}
 		return fmt.Errorf("expected error, but got no error")
 	}
@@ -207,18 +194,18 @@ func validateResponseForError(test TestCase, resp *Response) error {
 		return fmt.Errorf("expected result to be null or omitted when error is present, got: %s", string(resp.Result))
 	}
 
-	if test.Expected.Error.Code != nil {
+	if test.ExpectedResponse.Error.Code != nil {
 		if resp.Error.Code == nil {
 			return fmt.Errorf("expected error code %s.%s, but got error with no code",
-				test.Expected.Error.Code.Type, test.Expected.Error.Code.Member)
+				test.ExpectedResponse.Error.Code.Type, test.ExpectedResponse.Error.Code.Member)
 		}
 
-		if resp.Error.Code.Type != test.Expected.Error.Code.Type {
-			return fmt.Errorf("expected error type %s, got %s", test.Expected.Error.Code.Type, resp.Error.Code.Type)
+		if resp.Error.Code.Type != test.ExpectedResponse.Error.Code.Type {
+			return fmt.Errorf("expected error type %s, got %s", test.ExpectedResponse.Error.Code.Type, resp.Error.Code.Type)
 		}
 
-		if resp.Error.Code.Member != test.Expected.Error.Code.Member {
-			return fmt.Errorf("expected error member %s, got %s", test.Expected.Error.Code.Member, resp.Error.Code.Member)
+		if resp.Error.Code.Member != test.ExpectedResponse.Error.Code.Member {
+			return fmt.Errorf("expected error member %s, got %s", test.ExpectedResponse.Error.Code.Member, resp.Error.Code.Member)
 		}
 	}
 	return nil
@@ -228,7 +215,7 @@ func validateResponseForError(test TestCase, resp *Response) error {
 // It ensures the response contains no error, and if a result is expected, it matches the
 // expected value.
 func validateResponseForSuccess(test TestCase, resp *Response) error {
-	if test.Expected.Error != nil {
+	if test.ExpectedResponse.Error != nil {
 		panic("validateResponseForSuccess expects nil error")
 	}
 
@@ -239,14 +226,14 @@ func validateResponseForSuccess(test TestCase, resp *Response) error {
 		return fmt.Errorf("expected success with no error, but got error")
 	}
 
-	if test.Expected.Result.IsNullOrOmitted() {
+	if test.ExpectedResponse.Result.IsNullOrOmitted() {
 		if !resp.Result.IsNullOrOmitted() {
 			return fmt.Errorf("expected null or omitted result, got: %s", string(resp.Result))
 		}
 		return nil
 	}
 
-	expectedNorm, err := test.Expected.Result.Normalize()
+	expectedNorm, err := test.ExpectedResponse.Result.Normalize()
 	if err != nil {
 		return fmt.Errorf("failed to normalize expected result: %w", err)
 	}
