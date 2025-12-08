@@ -1,0 +1,84 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://github.com/stringintech/kernel-bindings-tests/response-schema.json",
+    "title": "Bitcoin Kernel Bindings Test Handler Response",
+    "description": "JSON Schema for responses sent from handlers to the test runner via stdout",
+    "version": "0.0.3",
+    "$ref": "#/definitions/Response",
+    "definitions": {
+        "Response": {
+            "type": "object",
+            "description": "A response sent from the handler to the test runner via stdout",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "Must match the request id"
+                },
+                "result": {
+                    "oneOf": [
+                        {
+                            "type": "string",
+                            "description": "Reference name for storing the returned object. Required for methods that return object references",
+                            "pattern": "^\\$"
+                        },
+                        {
+                            "type": "boolean"
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "The result of the operation. Null on error or for void operations"
+                },
+                "error": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/definitions/Error"
+                        },
+                        {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false,
+                            "description": "Empty object indicating an error"
+                        },
+                                                {
+                            "type": "null"
+                        }
+                    ],
+                    "description": "Error details or empty object if the operation failed. Null or omitted on success"
+                }
+            },
+            "required": [
+                "id"
+            ]
+        },
+        "Error": {
+            "type": "object",
+            "description": "Error information returned when an operation fails",
+            "properties": {
+                "code": {
+                    "$ref": "#/definitions/ErrorCode",
+                    "description": "Structured error code"
+                }
+            }
+        },
+        "ErrorCode": {
+            "type": "object",
+            "description": "Structured error code with type and member",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "The error type/category (e.g., 'btck_ScriptVerifyStatus')"
+                },
+                "member": {
+                    "type": "string",
+                    "description": "The specific error member within the type (e.g., 'ERROR_INVALID_FLAGS_COMBINATION')"
+                }
+            },
+            "required": [
+                "type",
+                "member"
+            ]
+        }
+    }
+}
