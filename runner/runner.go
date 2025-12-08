@@ -233,6 +233,10 @@ func validateResponseForSuccess(test TestCase, resp *Response) error {
 		return nil
 	}
 
+	if resp.Result.IsNullOrOmitted() {
+		return fmt.Errorf("expected result with value, got null or omitted result")
+	}
+
 	expectedNorm, err := test.ExpectedResponse.Result.Normalize()
 	if err != nil {
 		return fmt.Errorf("failed to normalize expected result: %w", err)
