@@ -16,6 +16,13 @@ type TestSuite struct {
 	Name        string     `json:"name"`
 	Description string     `json:"description,omitempty"`
 	Tests       []TestCase `json:"tests"`
+
+	// Stateful indicates that tests in this suite depend on each other and must
+	// execute sequentially. If any test fails in a stateful suite, all subsequent
+	// tests are automatically skipped and considered as failed. Use this for test
+	// suites where later tests depend on the success of earlier tests
+	// (e.g., setup -> operation -> verification).
+	Stateful bool `json:"stateful,omitempty"`
 }
 
 // Request represents a request sent to the handler
@@ -23,6 +30,9 @@ type Request struct {
 	ID     string          `json:"id"`
 	Method string          `json:"method"`
 	Params json.RawMessage `json:"params,omitempty"`
+	// Ref specifies the name the handler should use to store the returned object reference
+	// in its registry. Required for methods that return object handles.
+	Ref string `json:"ref,omitempty"`
 }
 
 // Response represents a response from the handler.
@@ -74,4 +84,23 @@ func (r Result) Normalize() (string, error) {
 		return "", err
 	}
 	return string(normalized), nil
+}
+
+// RefObject represents a reference type result structure.
+type RefObject struct {
+	Ref string `json:"ref"`
+}
+
+// ParseRefObject extracts the ref value from a reference object.
+// Returns the ref string and true if the result is a valid ref object,
+// or empty string and false otherwise.
+func ParseRefObject[T ~[]byte](r T) (string, bool) {
+	var refObj RefObject
+	if err := json.Unmarshal(r, &refObj); err != nil {
+		return "", false
+	}
+	if refObj.Ref == "" {
+		return "", false
+	}
+	return refObj.Ref, true
 }
