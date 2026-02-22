@@ -1,0 +1,277 @@
+{
+  "name": "script_verify_cltv",
+  "description": "Verifies a P2SH output with OP_CHECKLOCKTIMEVERIFY locked to block 100. Transaction with locktime=100 passes with P2SH + CHECKLOCKTIMEVERIFY and all pre-taproot flags; transaction with locktime=50 fails when CHECKLOCKTIMEVERIFY is enforced but passes with P2SH only.",
+  "stateful": true,
+  "tests": [
+    {
+      "description": "Create CLTV P2SH script pubkey (locked to block 100)",
+      "request": {
+        "id": "script_verify_cltv#1",
+        "method": "btck_script_pubkey_create",
+        "params": {
+          "script_pubkey": "a914e6855a94d0e499a0d554b2476cb779885986575b87"
+        },
+        "ref": "$spk"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$spk"
+        }
+      }
+    },
+    {
+      "description": "Create CLTV transaction with locktime=100 (satisfies CLTV condition)",
+      "request": {
+        "id": "script_verify_cltv#2",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "0200000001738df4ccd15745a9539ff632cbe903f1050807edf35a1a3835c5bca619078f19010000007047304402202124e252c265a905c02063b1235b77c2406ae3c44d5749117f0ac086e2350ba2022061b65765be68ac21b60ede916d2a6deb1e6f8c9f723e66859bf4f06d98f7112b01270164b1752102d8019ae39403a4c0b49e98a0be4ed9ad0b1ba20f324fd6268c7455841deddd0dac000000000118ddf50500000000015164000000"
+        },
+        "ref": "$tx_valid_locktime"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx_valid_locktime"
+        }
+      }
+    },
+    {
+      "description": "Create precomputed transaction data for valid locktime CLTV",
+      "request": {
+        "id": "script_verify_cltv#3",
+        "method": "btck_precomputed_transaction_data_create",
+        "params": {
+          "tx_to": {
+            "ref": "$tx_valid_locktime"
+          }
+        },
+        "ref": "$precomp_valid_locktime"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$precomp_valid_locktime"
+        }
+      }
+    },
+    {
+      "description": "Verify CLTV with locktime=100 and btck_ScriptVerificationFlags_P2SH + btck_ScriptVerificationFlags_CHECKLOCKTIMEVERIFY - passes",
+      "request": {
+        "id": "script_verify_cltv#4",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_valid_locktime"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_valid_locktime"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_CHECKLOCKTIMEVERIFY"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Verify CLTV with locktime=100 and all pre-taproot flags - passes",
+      "request": {
+        "id": "script_verify_cltv#5",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_valid_locktime"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_valid_locktime"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_DERSIG",
+            "btck_ScriptVerificationFlags_NULLDUMMY",
+            "btck_ScriptVerificationFlags_CHECKLOCKTIMEVERIFY",
+            "btck_ScriptVerificationFlags_CHECKSEQUENCEVERIFY",
+            "btck_ScriptVerificationFlags_WITNESS"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroy precomputed transaction data for valid locktime CLTV",
+      "request": {
+        "id": "script_verify_cltv#6",
+        "method": "btck_precomputed_transaction_data_destroy",
+        "params": {
+          "precomputed_txdata": {
+            "ref": "$precomp_valid_locktime"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy valid locktime CLTV transaction",
+      "request": {
+        "id": "script_verify_cltv#7",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx_valid_locktime"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Create CLTV transaction with locktime=50 (does not satisfy CLTV condition)",
+      "request": {
+        "id": "script_verify_cltv#8",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "0200000001738df4ccd15745a9539ff632cbe903f1050807edf35a1a3835c5bca619078f190100000071483045022100bdaefb402ddf25738762c57978b9f02adb9007e7c835673d8cbda6bc0b58ee78022054011b17b5d7d8b516d1ced26d124b435a5c4cccc7492778ab2a6661f5ef365801270164b1752102d8019ae39403a4c0b49e98a0be4ed9ad0b1ba20f324fd6268c7455841deddd0dac000000000118ddf50500000000015132000000"
+        },
+        "ref": "$tx_invalid_locktime"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx_invalid_locktime"
+        }
+      }
+    },
+    {
+      "description": "Create precomputed transaction data for invalid locktime CLTV",
+      "request": {
+        "id": "script_verify_cltv#9",
+        "method": "btck_precomputed_transaction_data_create",
+        "params": {
+          "tx_to": {
+            "ref": "$tx_invalid_locktime"
+          }
+        },
+        "ref": "$precomp_invalid_locktime"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$precomp_invalid_locktime"
+        }
+      }
+    },
+    {
+      "description": "Verify CLTV with locktime=50 and btck_ScriptVerificationFlags_P2SH + btck_ScriptVerificationFlags_CHECKLOCKTIMEVERIFY - fails (locktime < 100)",
+      "request": {
+        "id": "script_verify_cltv#10",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_invalid_locktime"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_invalid_locktime"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_CHECKLOCKTIMEVERIFY"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": false
+      }
+    },
+    {
+      "description": "Verify CLTV with locktime=50 and btck_ScriptVerificationFlags_P2SH only - passes (CLTV not enforced)",
+      "request": {
+        "id": "script_verify_cltv#11",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_invalid_locktime"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_invalid_locktime"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroy precomputed transaction data for invalid locktime CLTV",
+      "request": {
+        "id": "script_verify_cltv#12",
+        "method": "btck_precomputed_transaction_data_destroy",
+        "params": {
+          "precomputed_txdata": {
+            "ref": "$precomp_invalid_locktime"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy invalid locktime CLTV transaction",
+      "request": {
+        "id": "script_verify_cltv#13",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx_invalid_locktime"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy CLTV P2SH script pubkey",
+      "request": {
+        "id": "script_verify_cltv#14",
+        "method": "btck_script_pubkey_destroy",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    }
+  ]
+}

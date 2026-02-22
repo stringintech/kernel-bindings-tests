@@ -125,7 +125,8 @@ func (dt *DependencyTracker) testUsesStatefulRefs(testIndex int, allTests []Test
 }
 
 // extractRefsFromParams extracts all reference names from params JSON.
-// Searches for ref objects with structure {"ref": "..."} at the first level of params.
+// Searches for ref objects with structure {"ref": "..."} at the top level of params,
+// and also inside array values one level deep.
 func extractRefsFromParams(params json.RawMessage) []string {
 	var refs []string
 
@@ -137,6 +138,16 @@ func extractRefsFromParams(params json.RawMessage) []string {
 	for _, value := range paramsMap {
 		if ref, ok := ParseRefObject(value); ok {
 			refs = append(refs, ref)
+			continue
+		}
+		// Check if value is an array and scan its elements for ref objects
+		var arr []json.RawMessage
+		if err := json.Unmarshal(value, &arr); err == nil {
+			for _, elem := range arr {
+				if ref, ok := ParseRefObject(elem); ok {
+					refs = append(refs, ref)
+				}
+			}
 		}
 	}
 	return refs

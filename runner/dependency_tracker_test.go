@@ -6,6 +6,51 @@ import (
 	"testing"
 )
 
+func TestExtractRefsFromParams(t *testing.T) {
+	tests := []struct {
+		description string
+		params      string
+		wantRefs    []string
+	}{
+		{
+			description: "direct ref at top level",
+			params:      `{"input": {"ref": "$ref_a"}}`,
+			wantRefs:    []string{"$ref_a"},
+		},
+		{
+			description: "refs inside array param",
+			params:      `{"items": [{"ref": "$ref_a"}, {"ref": "$ref_b"}]}`,
+			wantRefs:    []string{"$ref_a", "$ref_b"},
+		},
+		{
+			description: "mixed direct and array refs",
+			params:      `{"direct": {"ref": "$ref_a"}, "items": [{"ref": "$ref_b"}]}`,
+			wantRefs:    []string{"$ref_a", "$ref_b"},
+		},
+		{
+			description: "deeply nested ref in array is not extracted",
+			params:      `{"direct": {"ref": "$ref_a"}, "items": [{"nested": {"ref": "$ref_b"}}]}`,
+			wantRefs:    []string{"$ref_a"},
+		},
+		{
+			description: "non-ref values in array are ignored",
+			params:      `{"items": [{"ref": "$ref_a"}, "plain_string", 42]}`,
+			wantRefs:    []string{"$ref_a"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			got := extractRefsFromParams([]byte(tt.params))
+			slices.Sort(got)
+			slices.Sort(tt.wantRefs)
+			if !slices.Equal(got, tt.wantRefs) {
+				t.Errorf("extractRefsFromParams(%s) = %v, want %v", tt.params, got, tt.wantRefs)
+			}
+		})
+	}
+}
+
 func TestDependencyTracker_BuildDependencyChains(t *testing.T) {
 	// Create test cases to verify dependency chain building
 	testsJSON := `[
@@ -41,6 +86,14 @@ func TestDependencyTracker_BuildDependencyChains(t *testing.T) {
 				"id": "test3",
 				"method": "use_multiple",
 				"params": {"first": {"ref": "$ref_b"}, "second": {"ref": "$ref_c"}}
+			},
+			"expected_response": {}
+		},
+		{
+			"request": {
+				"id": "test4",
+				"method": "use_array",
+				"params": {"items": [{"ref": "$ref_a"}, {"ref": "$ref_c"}]}
 			},
 			"expected_response": {}
 		}
@@ -85,6 +138,11 @@ func TestDependencyTracker_BuildDependencyChains(t *testing.T) {
 			testIdx:      3,
 			wantDepChain: []int{0, 1, 2},
 			description:  "test3 depends on test1 (which depends on test0) and test2",
+		},
+		{
+			testIdx:      4,
+			wantDepChain: []int{0, 2},
+			description:  "test4 depends on test0 and test2 via refs nested in an array param",
 		},
 	}
 

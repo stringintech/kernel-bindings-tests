@@ -1,0 +1,277 @@
+{
+  "name": "script_verify_p2wsh",
+  "description": "Verifies a mainnet native P2WSH output at input index 1 of a two-input transaction. Valid HTLC-style witness script passes with P2SH + WITNESS and all pre-taproot flags; corrupted witness sig fails with WITNESS enforced, passes with P2SH only. Mainnet tx 12fc05be6778b06e77191e8fb18fee632b2d92efa0b6830e1cf63e28723a8b8f.",
+  "stateful": true,
+  "tests": [
+    {
+      "description": "Create native P2WSH script pubkey",
+      "request": {
+        "id": "script_verify_p2wsh#1",
+        "method": "btck_script_pubkey_create",
+        "params": {
+          "script_pubkey": "0020b38c970d115bffbc7d16c5f3fc858cefe3448c8d141a679b65554de78a88a0cd"
+        },
+        "ref": "$spk"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$spk"
+        }
+      }
+    },
+    {
+      "description": "Create valid P2WSH transaction",
+      "request": {
+        "id": "script_verify_p2wsh#2",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "01000000000102e1434357ad4d08274ed106e21f2694d35000b46e66b1dd714d63e9cd3f2ab4740000000000ffffffffb9de6f14166a841772ec53c6e384adb3dc151ba1e7b2c0a92cc9f194690be1240000000000ffffffff0198282d0000000000160014c95362dd904e547af461dbf4cc4d251a8fa1295205483045022100c8553375207dd6ef92439a22707a268629b4af08ae94d02e92c8acc355f5911902207ed6b01a97a9cc52c1fb8c6c6999b27e9c34f703a03917d8a640a45e0589ed9901210200c503dc20b66731af9d189f0a0981b148b40cb2c26f3ff15cc90037b812b6e22017e3c268fe7c34ea02effd3975038fc09ce0326b063fe0ec9356b6f558ba55ff0101616382012088a820be72730c5ba3ae4d924ef26be8a20b2e820d63916bb9db4f38214f739b897e1d8876a9148d1fe4411b3cd3a0bccafb8b57ee0c071e5abd79670428c18969b17576a914bec3dacae92ec1cd60843a8704119b0e202c6d346888ac05483045022100ae691ea4c91edf52f44e56e4f53d1ab6bb2562bb34f4f56f4f0003ea52f91fa7022001ca8196e6961b29cff64e1b5ac8917ba90a162f8230860bbc7b050624578fb701210200c503dc20b66731af9d189f0a0981b148b40cb2c26f3ff15cc90037b812b6e220362fc6c6a5b56532c27f701a067eda066ec2be426b5cd696a3a030abffc446ce0101616382012088a820360537c727eed2694b8d5493c1b0b5d79289042af10f6cdb3361f14d3fab523e8876a9148d1fe4411b3cd3a0bccafb8b57ee0c071e5abd7967043cc18969b17576a914ad27aa467040ddf17bbea8be0794e3e6953c09066888ac00000000"
+        },
+        "ref": "$tx_valid"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx_valid"
+        }
+      }
+    },
+    {
+      "description": "Create precomputed transaction data for valid P2WSH",
+      "request": {
+        "id": "script_verify_p2wsh#3",
+        "method": "btck_precomputed_transaction_data_create",
+        "params": {
+          "tx_to": {
+            "ref": "$tx_valid"
+          }
+        },
+        "ref": "$precomp_valid"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$precomp_valid"
+        }
+      }
+    },
+    {
+      "description": "Verify valid P2WSH at input index 1 with btck_ScriptVerificationFlags_P2SH + btck_ScriptVerificationFlags_WITNESS",
+      "request": {
+        "id": "script_verify_p2wsh#4",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 1480000,
+          "tx_to": {
+            "ref": "$tx_valid"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_valid"
+          },
+          "input_index": 1,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_WITNESS"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Verify valid P2WSH at input index 1 with all pre-taproot flags",
+      "request": {
+        "id": "script_verify_p2wsh#5",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 1480000,
+          "tx_to": {
+            "ref": "$tx_valid"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_valid"
+          },
+          "input_index": 1,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_DERSIG",
+            "btck_ScriptVerificationFlags_NULLDUMMY",
+            "btck_ScriptVerificationFlags_CHECKLOCKTIMEVERIFY",
+            "btck_ScriptVerificationFlags_CHECKSEQUENCEVERIFY",
+            "btck_ScriptVerificationFlags_WITNESS"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroy precomputed transaction data for valid P2WSH",
+      "request": {
+        "id": "script_verify_p2wsh#6",
+        "method": "btck_precomputed_transaction_data_destroy",
+        "params": {
+          "precomputed_txdata": {
+            "ref": "$precomp_valid"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy valid P2WSH transaction",
+      "request": {
+        "id": "script_verify_p2wsh#7",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx_valid"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Create P2WSH transaction with corrupted signature (one byte flipped in second witness)",
+      "request": {
+        "id": "script_verify_p2wsh#8",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "01000000000102e1434357ad4d08274ed106e21f2694d35000b46e66b1dd714d63e9cd3f2ab4740000000000ffffffffb9de6f14166a841772ec53c6e384adb3dc151ba1e7b2c0a92cc9f194690be1240000000000ffffffff0198282d0000000000160014c95362dd904e547af461dbf4cc4d251a8fa1295205483045022100c8553375207dd6ef92439a22707a268629b4af08ae94d02e92c8acc355f5911902207ed6b01a97a9cc52c1fb8c6c6999b27e9c34f703a03917d8a640a45e0589ed9901210200c503dc20b66731af9d189f0a0981b148b40cb2c26f3ff15cc90037b812b6e22017e3c268fe7c34ea02effd3975038fc09ce0326b063fe0ec9356b6f558ba55ff0101616382012088a820be72730c5ba3ae4d924ef26be8a20b2e820d63916bb9db4f38214f739b897e1d8876a9148d1fe4411b3cd3a0bccafb8b57ee0c071e5abd79670428c18969b17576a914bec3dacae92ec1cd60843a8704119b0e202c6d346888ac05483045022100ae691ea4c91edf52f44e56e4f53d1ab6bb2562bb34f4f56f4f0003ea52f91fa7022001ca2196e6961b29cff64e1b5ac8917ba90a162f8230860bbc7b050624578fb701210200c503dc20b66731af9d189f0a0981b148b40cb2c26f3ff15cc90037b812b6e220362fc6c6a5b56532c27f701a067eda066ec2be426b5cd696a3a030abffc446ce0101616382012088a820360537c727eed2694b8d5493c1b0b5d79289042af10f6cdb3361f14d3fab523e8876a9148d1fe4411b3cd3a0bccafb8b57ee0c071e5abd7967043cc18969b17576a914ad27aa467040ddf17bbea8be0794e3e6953c09066888ac00000000"
+        },
+        "ref": "$tx_corrupted_sig"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx_corrupted_sig"
+        }
+      }
+    },
+    {
+      "description": "Create precomputed transaction data for corrupted sig P2WSH",
+      "request": {
+        "id": "script_verify_p2wsh#9",
+        "method": "btck_precomputed_transaction_data_create",
+        "params": {
+          "tx_to": {
+            "ref": "$tx_corrupted_sig"
+          }
+        },
+        "ref": "$precomp_corrupted_sig"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$precomp_corrupted_sig"
+        }
+      }
+    },
+    {
+      "description": "Verify P2WSH with corrupted signature at input index 1 and btck_ScriptVerificationFlags_P2SH + btck_ScriptVerificationFlags_WITNESS - fails",
+      "request": {
+        "id": "script_verify_p2wsh#10",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 1480000,
+          "tx_to": {
+            "ref": "$tx_corrupted_sig"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_corrupted_sig"
+          },
+          "input_index": 1,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_WITNESS"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": false
+      }
+    },
+    {
+      "description": "Verify P2WSH with corrupted signature at input index 1 and btck_ScriptVerificationFlags_P2SH only - passes (witness not enforced)",
+      "request": {
+        "id": "script_verify_p2wsh#11",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 1480000,
+          "tx_to": {
+            "ref": "$tx_corrupted_sig"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_corrupted_sig"
+          },
+          "input_index": 1,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroy precomputed transaction data for corrupted sig P2WSH",
+      "request": {
+        "id": "script_verify_p2wsh#12",
+        "method": "btck_precomputed_transaction_data_destroy",
+        "params": {
+          "precomputed_txdata": {
+            "ref": "$precomp_corrupted_sig"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy corrupted sig P2WSH transaction",
+      "request": {
+        "id": "script_verify_p2wsh#13",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx_corrupted_sig"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy native P2WSH script pubkey",
+      "request": {
+        "id": "script_verify_p2wsh#14",
+        "method": "btck_script_pubkey_destroy",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    }
+  ]
+}

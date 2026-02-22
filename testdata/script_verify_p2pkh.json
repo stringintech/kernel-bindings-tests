@@ -1,0 +1,365 @@
+{
+  "name": "script_verify_p2pkh",
+  "description": "Verifies a mainnet P2PKH output against three transaction variants: valid sig (passes with no flags and all pre-taproot flags), corrupted sig (always fails), non-DER sig (passes without DERSIG, fails with it). Mainnet tx aca326a724eda9a461c10a876534ecd5ae7b27f10f26c3862fb996f80ea2d45d.",
+  "stateful": true,
+  "tests": [
+    {
+      "description": "Create P2PKH script pubkey",
+      "request": {
+        "id": "script_verify_p2pkh#1",
+        "method": "btck_script_pubkey_create",
+        "params": {
+          "script_pubkey": "76a9144bfbaf6afb76cc5771bc6404810d1cc041a6933988ac"
+        },
+        "ref": "$spk"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$spk"
+        }
+      }
+    },
+    {
+      "description": "Create valid P2PKH transaction",
+      "request": {
+        "id": "script_verify_p2pkh#2",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "02000000013f7cebd65c27431a90bba7f796914fe8cc2ddfc3f2cbd6f7e5f2fc854534da95000000006b483045022100de1ac3bcdfb0332207c4a91f3832bd2c2915840165f876ab47c5f8996b971c3602201c6c053d750fadde599e6f5c4e1963df0f01fc0d97815e8157e3d59fe09ca30d012103699b464d1d8bc9e47d4fb1cdaa89a1c5783d68363c4dbc4b524ed3d857148617feffffff02836d3c01000000001976a914fc25d6d5c94003bf5b0c7b640a248e2c637fcfb088ac7ada8202000000001976a914fbed3d9b11183209a57999d54d59f67c019e756c88ac6acb0700"
+        },
+        "ref": "$tx_valid"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx_valid"
+        }
+      }
+    },
+    {
+      "description": "Create precomputed transaction data for valid P2PKH",
+      "request": {
+        "id": "script_verify_p2pkh#3",
+        "method": "btck_precomputed_transaction_data_create",
+        "params": {
+          "tx_to": {
+            "ref": "$tx_valid"
+          }
+        },
+        "ref": "$precomp_valid"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$precomp_valid"
+        }
+      }
+    },
+    {
+      "description": "Verify valid P2PKH with no flags",
+      "request": {
+        "id": "script_verify_p2pkh#4",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_valid"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_valid"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_NONE"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Verify valid P2PKH with all pre-taproot flags",
+      "request": {
+        "id": "script_verify_p2pkh#5",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_valid"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_valid"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_DERSIG",
+            "btck_ScriptVerificationFlags_NULLDUMMY",
+            "btck_ScriptVerificationFlags_CHECKLOCKTIMEVERIFY",
+            "btck_ScriptVerificationFlags_CHECKSEQUENCEVERIFY",
+            "btck_ScriptVerificationFlags_WITNESS"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroy precomputed transaction data for valid P2PKH",
+      "request": {
+        "id": "script_verify_p2pkh#6",
+        "method": "btck_precomputed_transaction_data_destroy",
+        "params": {
+          "precomputed_txdata": {
+            "ref": "$precomp_valid"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy valid P2PKH transaction",
+      "request": {
+        "id": "script_verify_p2pkh#7",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx_valid"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Create P2PKH transaction with corrupted signature (one byte flipped)",
+      "request": {
+        "id": "script_verify_p2pkh#8",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "02000000013f7cebd65c27431a90bba7f796914fe8cc2ddfc3f2cbd6f7e5f2fc854534da95000000006b483045022100de1ac3bcdfb0332207c4a91f3832bd2c2915840165f876ab47c6f8996b971c3602201c6c053d750fadde599e6f5c4e1963df0f01fc0d97815e8157e3d59fe09ca30d012103699b464d1d8bc9e47d4fb1cdaa89a1c5783d68363c4dbc4b524ed3d857148617feffffff02836d3c01000000001976a914fc25d6d5c94003bf5b0c7b640a248e2c637fcfb088ac7ada8202000000001976a914fbed3d9b11183209a57999d54d59f67c019e756c88ac6acb0700"
+        },
+        "ref": "$tx_corrupted_sig"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx_corrupted_sig"
+        }
+      }
+    },
+    {
+      "description": "Create precomputed transaction data for corrupted sig P2PKH",
+      "request": {
+        "id": "script_verify_p2pkh#9",
+        "method": "btck_precomputed_transaction_data_create",
+        "params": {
+          "tx_to": {
+            "ref": "$tx_corrupted_sig"
+          }
+        },
+        "ref": "$precomp_corrupted_sig"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$precomp_corrupted_sig"
+        }
+      }
+    },
+    {
+      "description": "Verify P2PKH with corrupted signature and no flags - fails with invalid",
+      "request": {
+        "id": "script_verify_p2pkh#10",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_corrupted_sig"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_corrupted_sig"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_NONE"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": false
+      }
+    },
+    {
+      "description": "Destroy precomputed transaction data for corrupted sig P2PKH",
+      "request": {
+        "id": "script_verify_p2pkh#11",
+        "method": "btck_precomputed_transaction_data_destroy",
+        "params": {
+          "precomputed_txdata": {
+            "ref": "$precomp_corrupted_sig"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy corrupted sig P2PKH transaction",
+      "request": {
+        "id": "script_verify_p2pkh#12",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx_corrupted_sig"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Create P2PKH transaction with non-DER signature (length byte 0x46 instead of 0x45)",
+      "request": {
+        "id": "script_verify_p2pkh#13",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "02000000013f7cebd65c27431a90bba7f796914fe8cc2ddfc3f2cbd6f7e5f2fc854534da95000000006b483046022100de1ac3bcdfb0332207c4a91f3832bd2c2915840165f876ab47c5f8996b971c3602201c6c053d750fadde599e6f5c4e1963df0f01fc0d97815e8157e3d59fe09ca30d012103699b464d1d8bc9e47d4fb1cdaa89a1c5783d68363c4dbc4b524ed3d857148617feffffff02836d3c01000000001976a914fc25d6d5c94003bf5b0c7b640a248e2c637fcfb088ac7ada8202000000001976a914fbed3d9b11183209a57999d54d59f67c019e756c88ac6acb0700"
+        },
+        "ref": "$tx_non_der_sig"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx_non_der_sig"
+        }
+      }
+    },
+    {
+      "description": "Create precomputed transaction data for non-DER sig P2PKH",
+      "request": {
+        "id": "script_verify_p2pkh#14",
+        "method": "btck_precomputed_transaction_data_create",
+        "params": {
+          "tx_to": {
+            "ref": "$tx_non_der_sig"
+          }
+        },
+        "ref": "$precomp_non_der_sig"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$precomp_non_der_sig"
+        }
+      }
+    },
+    {
+      "description": "Verify P2PKH with non-DER signature and no flags - succeeds (DER not enforced)",
+      "request": {
+        "id": "script_verify_p2pkh#15",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_non_der_sig"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_non_der_sig"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_NONE"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Verify P2PKH with non-DER signature and btck_ScriptVerificationFlags_DERSIG - fails (DER enforced)",
+      "request": {
+        "id": "script_verify_p2pkh#16",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_non_der_sig"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_non_der_sig"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_DERSIG"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": false
+      }
+    },
+    {
+      "description": "Destroy precomputed transaction data for non-DER sig P2PKH",
+      "request": {
+        "id": "script_verify_p2pkh#17",
+        "method": "btck_precomputed_transaction_data_destroy",
+        "params": {
+          "precomputed_txdata": {
+            "ref": "$precomp_non_der_sig"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy non-DER sig P2PKH transaction",
+      "request": {
+        "id": "script_verify_p2pkh#18",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx_non_der_sig"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy P2PKH script pubkey",
+      "request": {
+        "id": "script_verify_p2pkh#19",
+        "method": "btck_script_pubkey_destroy",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    }
+  ]
+}
