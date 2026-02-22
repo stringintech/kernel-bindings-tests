@@ -43,6 +43,14 @@ func TestDependencyTracker_BuildDependencyChains(t *testing.T) {
 				"params": {"first": {"ref": "$ref_b"}, "second": {"ref": "$ref_c"}}
 			},
 			"expected_response": {}
+		},
+		{
+			"request": {
+				"id": "test4",
+				"method": "use_array",
+				"params": {"items": [{"ref": "$ref_a"}, {"ref": "$ref_c"}]}
+			},
+			"expected_response": {}
 		}
 	]`
 
@@ -85,6 +93,11 @@ func TestDependencyTracker_BuildDependencyChains(t *testing.T) {
 			testIdx:      3,
 			wantDepChain: []int{0, 1, 2},
 			description:  "test3 depends on test1 (which depends on test0) and test2",
+		},
+		{
+			testIdx:      4,
+			wantDepChain: []int{0, 2},
+			description:  "test4 depends on test0 and test2 via refs nested in an array param",
 		},
 	}
 

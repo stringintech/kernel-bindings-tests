@@ -1,0 +1,277 @@
+{
+  "name": "script_verify_csv",
+  "description": "Verifies a P2SH output with OP_CHECKSEQUENCEVERIFY locked to sequence 10. Transaction with sequence=10 passes with P2SH + CHECKSEQUENCEVERIFY and all pre-taproot flags; transaction with sequence=5 fails when CHECKSEQUENCEVERIFY is enforced but passes with P2SH only.",
+  "stateful": true,
+  "tests": [
+    {
+      "description": "Create CSV P2SH script pubkey (locked to sequence 10)",
+      "request": {
+        "id": "script_verify_csv#1",
+        "method": "btck_script_pubkey_create",
+        "params": {
+          "script_pubkey": "a914284e9e01049bc9bfe2a1f06e6e78cd29a717ffb987"
+        },
+        "ref": "$spk"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$spk"
+        }
+      }
+    },
+    {
+      "description": "Create CSV transaction with input sequence=10 (satisfies CSV condition)",
+      "request": {
+        "id": "script_verify_csv#2",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "0200000001b4b3b5eed405f118a43e411d51eace0b7a48ad6ec061e0c6d1e2a5dbc50fa1780100000071483045022100fc82daf200e56d9500d3cdb4708a5d9cf1b62a3299dedc9cdf7b6e6412b7fa280220144b6d6c535a6a66f60d25b68c6b6ae95c0e45c8801e4007b76d0cfcf264ec4d0127010ab275210291c420b3afc1c75796653268a727d61df2edd606c243b261df61dd22f388553fac0a0000000118ddf50500000000015100000000"
+        },
+        "ref": "$tx_valid_sequence"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx_valid_sequence"
+        }
+      }
+    },
+    {
+      "description": "Create precomputed transaction data for valid sequence CSV",
+      "request": {
+        "id": "script_verify_csv#3",
+        "method": "btck_precomputed_transaction_data_create",
+        "params": {
+          "tx_to": {
+            "ref": "$tx_valid_sequence"
+          }
+        },
+        "ref": "$precomp_valid_sequence"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$precomp_valid_sequence"
+        }
+      }
+    },
+    {
+      "description": "Verify CSV with sequence=10 and btck_ScriptVerificationFlags_P2SH + btck_ScriptVerificationFlags_CHECKSEQUENCEVERIFY - passes",
+      "request": {
+        "id": "script_verify_csv#4",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_valid_sequence"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_valid_sequence"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_CHECKSEQUENCEVERIFY"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Verify CSV with sequence=10 and all pre-taproot flags - passes",
+      "request": {
+        "id": "script_verify_csv#5",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_valid_sequence"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_valid_sequence"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_DERSIG",
+            "btck_ScriptVerificationFlags_NULLDUMMY",
+            "btck_ScriptVerificationFlags_CHECKLOCKTIMEVERIFY",
+            "btck_ScriptVerificationFlags_CHECKSEQUENCEVERIFY",
+            "btck_ScriptVerificationFlags_WITNESS"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroy precomputed transaction data for valid sequence CSV",
+      "request": {
+        "id": "script_verify_csv#6",
+        "method": "btck_precomputed_transaction_data_destroy",
+        "params": {
+          "precomputed_txdata": {
+            "ref": "$precomp_valid_sequence"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy valid sequence CSV transaction",
+      "request": {
+        "id": "script_verify_csv#7",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx_valid_sequence"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Create CSV transaction with input sequence=5 (does not satisfy CSV condition)",
+      "request": {
+        "id": "script_verify_csv#8",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "0200000001b4b3b5eed405f118a43e411d51eace0b7a48ad6ec061e0c6d1e2a5dbc50fa178010000007148304502210080c15d7432d18c78529b95f6677dfc57ae22024789eefed400dbfebcdc8341da02204775fed6dedc3b540eea67c3bf8058e1211248970cdab9980c0ed09736e13fbb0127010ab275210291c420b3afc1c75796653268a727d61df2edd606c243b261df61dd22f388553fac050000000118ddf50500000000015100000000"
+        },
+        "ref": "$tx_invalid_sequence"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx_invalid_sequence"
+        }
+      }
+    },
+    {
+      "description": "Create precomputed transaction data for invalid sequence CSV",
+      "request": {
+        "id": "script_verify_csv#9",
+        "method": "btck_precomputed_transaction_data_create",
+        "params": {
+          "tx_to": {
+            "ref": "$tx_invalid_sequence"
+          }
+        },
+        "ref": "$precomp_invalid_sequence"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$precomp_invalid_sequence"
+        }
+      }
+    },
+    {
+      "description": "Verify CSV with sequence=5 and btck_ScriptVerificationFlags_P2SH + btck_ScriptVerificationFlags_CHECKSEQUENCEVERIFY - fails (sequence < 10)",
+      "request": {
+        "id": "script_verify_csv#10",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_invalid_sequence"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_invalid_sequence"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_CHECKSEQUENCEVERIFY"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": false
+      }
+    },
+    {
+      "description": "Verify CSV with sequence=5 and btck_ScriptVerificationFlags_P2SH only - passes (CSV not enforced)",
+      "request": {
+        "id": "script_verify_csv#11",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_invalid_sequence"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_invalid_sequence"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroy precomputed transaction data for invalid sequence CSV",
+      "request": {
+        "id": "script_verify_csv#12",
+        "method": "btck_precomputed_transaction_data_destroy",
+        "params": {
+          "precomputed_txdata": {
+            "ref": "$precomp_invalid_sequence"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy invalid sequence CSV transaction",
+      "request": {
+        "id": "script_verify_csv#13",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx_invalid_sequence"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy CSV P2SH script pubkey",
+      "request": {
+        "id": "script_verify_csv#14",
+        "method": "btck_script_pubkey_destroy",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    }
+  ]
+}

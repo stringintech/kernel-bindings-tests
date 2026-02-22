@@ -1,0 +1,392 @@
+{
+  "name": "script_verify_p2sh_multisig",
+  "description": "Verifies a mainnet P2SH 2-of-3 multisig output against three variants: valid sigs (passes with P2SH and all pre-taproot flags), corrupted sig (fails with P2SH, passes without it), non-null dummy element (passes with P2SH only, fails when NULLDUMMY is also set). Mainnet tx 3cd7f78499632d6f672d8a9412ae756b29c41342954c97846e0d153c7753a37e.",
+  "stateful": true,
+  "tests": [
+    {
+      "description": "Create P2SH multisig script pubkey",
+      "request": {
+        "id": "script_verify_p2sh_multisig#1",
+        "method": "btck_script_pubkey_create",
+        "params": {
+          "script_pubkey": "a914fc8b5799cb5ae54c1be1fd97844a1cd97e820c5587"
+        },
+        "ref": "$spk"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$spk"
+        }
+      }
+    },
+    {
+      "description": "Create valid P2SH multisig transaction",
+      "request": {
+        "id": "script_verify_p2sh_multisig#2",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "0100000001dd320ee7e290ddd042332f85dd064d2ee052257a9f4761929c237a7674ff1f0d01000000fdfe0000483045022100f808cadda09bf753740a9d1f012fe9224d670d2b4337af61858e9a61d1415a6a0220296e83ac33055c8e58bcd4f7a1afc010b6da0787e41b0add9ced70bf1b5694c901483045022100ed525f5b43420c4fe745a19276e851bf21270bbb81717e4ead7d7919a1be267802201b48b9e6c92cc698f6ceb0c170321deb253d9d94c355f00bb0c6727a567d3dcf014c69522102239bbabd01dc2e4974d60dd658ca8547924f3f3fa5e583f4dea116c5a330b7d32102135d7f51e7c3aced9d0b7a5c0dc374eea814afce5e5a075f3bacf143b33af2e62102606e72be62d5fcff8764807ff676d31e7e99b5f56b79e38fdbb794d2796bbbfa53aeffffffff02846a8700000000001976a914932850c5373a1dda47027c51125b0493c026c9a388ac4da06c000000000017a91498dd7103a99f268f443fee4424a240af3d4a5aeb8700000000"
+        },
+        "ref": "$tx_valid"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx_valid"
+        }
+      }
+    },
+    {
+      "description": "Create precomputed transaction data for valid P2SH multisig",
+      "request": {
+        "id": "script_verify_p2sh_multisig#3",
+        "method": "btck_precomputed_transaction_data_create",
+        "params": {
+          "tx_to": {
+            "ref": "$tx_valid"
+          }
+        },
+        "ref": "$precomp_valid"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$precomp_valid"
+        }
+      }
+    },
+    {
+      "description": "Verify valid P2SH multisig with btck_ScriptVerificationFlags_P2SH",
+      "request": {
+        "id": "script_verify_p2sh_multisig#4",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_valid"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_valid"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Verify valid P2SH multisig with all pre-taproot flags",
+      "request": {
+        "id": "script_verify_p2sh_multisig#5",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_valid"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_valid"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_DERSIG",
+            "btck_ScriptVerificationFlags_NULLDUMMY",
+            "btck_ScriptVerificationFlags_CHECKLOCKTIMEVERIFY",
+            "btck_ScriptVerificationFlags_CHECKSEQUENCEVERIFY",
+            "btck_ScriptVerificationFlags_WITNESS"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroy precomputed transaction data for valid P2SH multisig",
+      "request": {
+        "id": "script_verify_p2sh_multisig#6",
+        "method": "btck_precomputed_transaction_data_destroy",
+        "params": {
+          "precomputed_txdata": {
+            "ref": "$precomp_valid"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy valid P2SH multisig transaction",
+      "request": {
+        "id": "script_verify_p2sh_multisig#7",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx_valid"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Create P2SH multisig transaction with corrupted signature (length byte 0x31 instead of 0x30)",
+      "request": {
+        "id": "script_verify_p2sh_multisig#8",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "0100000001dd320ee7e290ddd042332f85dd064d2ee052257a9f4761929c237a7674ff1f0d01000000fdfe0000483045023100f808cadda09bf753740a9d1f012fe9224d670d2b4337af61858e9a61d1415a6a0220296e83ac33055c8e58bcd4f7a1afc010b6da0787e41b0add9ced70bf1b5694c901483045022100ed525f5b43420c4fe745a19276e851bf21270bbb81717e4ead7d7919a1be267802201b48b9e6c92cc698f6ceb0c170321deb253d9d94c355f00bb0c6727a567d3dcf014c69522102239bbabd01dc2e4974d60dd658ca8547924f3f3fa5e583f4dea116c5a330b7d32102135d7f51e7c3aced9d0b7a5c0dc374eea814afce5e5a075f3bacf143b33af2e62102606e72be62d5fcff8764807ff676d31e7e99b5f56b79e38fdbb794d2796bbbfa53aeffffffff02846a8700000000001976a914932850c5373a1dda47027c51125b0493c026c9a388ac4da06c000000000017a91498dd7103a99f268f443fee4424a240af3d4a5aeb8700000000"
+        },
+        "ref": "$tx_corrupted_sig"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx_corrupted_sig"
+        }
+      }
+    },
+    {
+      "description": "Create precomputed transaction data for corrupted sig P2SH multisig",
+      "request": {
+        "id": "script_verify_p2sh_multisig#9",
+        "method": "btck_precomputed_transaction_data_create",
+        "params": {
+          "tx_to": {
+            "ref": "$tx_corrupted_sig"
+          }
+        },
+        "ref": "$precomp_corrupted_sig"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$precomp_corrupted_sig"
+        }
+      }
+    },
+    {
+      "description": "Verify P2SH multisig with corrupted signature and btck_ScriptVerificationFlags_P2SH - fails",
+      "request": {
+        "id": "script_verify_p2sh_multisig#10",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_corrupted_sig"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_corrupted_sig"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": false
+      }
+    },
+    {
+      "description": "Verify P2SH multisig with corrupted signature and no flags - passes (P2SH not enforced)",
+      "request": {
+        "id": "script_verify_p2sh_multisig#11",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_corrupted_sig"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_corrupted_sig"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_NONE"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroy precomputed transaction data for corrupted sig P2SH multisig",
+      "request": {
+        "id": "script_verify_p2sh_multisig#12",
+        "method": "btck_precomputed_transaction_data_destroy",
+        "params": {
+          "precomputed_txdata": {
+            "ref": "$precomp_corrupted_sig"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy corrupted sig P2SH multisig transaction",
+      "request": {
+        "id": "script_verify_p2sh_multisig#13",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx_corrupted_sig"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Create P2SH multisig transaction with non-null dummy stack element (OP_1 instead of OP_0)",
+      "request": {
+        "id": "script_verify_p2sh_multisig#14",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "0100000001dd320ee7e290ddd042332f85dd064d2ee052257a9f4761929c237a7674ff1f0d01000000fdfe0051483045022100f808cadda09bf753740a9d1f012fe9224d670d2b4337af61858e9a61d1415a6a0220296e83ac33055c8e58bcd4f7a1afc010b6da0787e41b0add9ced70bf1b5694c901483045022100ed525f5b43420c4fe745a19276e851bf21270bbb81717e4ead7d7919a1be267802201b48b9e6c92cc698f6ceb0c170321deb253d9d94c355f00bb0c6727a567d3dcf014c69522102239bbabd01dc2e4974d60dd658ca8547924f3f3fa5e583f4dea116c5a330b7d32102135d7f51e7c3aced9d0b7a5c0dc374eea814afce5e5a075f3bacf143b33af2e62102606e72be62d5fcff8764807ff676d31e7e99b5f56b79e38fdbb794d2796bbbfa53aeffffffff02846a8700000000001976a914932850c5373a1dda47027c51125b0493c026c9a388ac4da06c000000000017a91498dd7103a99f268f443fee4424a240af3d4a5aeb8700000000"
+        },
+        "ref": "$tx_non_null_dummy"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx_non_null_dummy"
+        }
+      }
+    },
+    {
+      "description": "Create precomputed transaction data for non-null dummy P2SH multisig",
+      "request": {
+        "id": "script_verify_p2sh_multisig#15",
+        "method": "btck_precomputed_transaction_data_create",
+        "params": {
+          "tx_to": {
+            "ref": "$tx_non_null_dummy"
+          }
+        },
+        "ref": "$precomp_non_null_dummy"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$precomp_non_null_dummy"
+        }
+      }
+    },
+    {
+      "description": "Verify P2SH multisig with non-null dummy and btck_ScriptVerificationFlags_P2SH - passes (NULLDUMMY not enforced)",
+      "request": {
+        "id": "script_verify_p2sh_multisig#16",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_non_null_dummy"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_non_null_dummy"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Verify P2SH multisig with non-null dummy and btck_ScriptVerificationFlags_P2SH + btck_ScriptVerificationFlags_NULLDUMMY - fails",
+      "request": {
+        "id": "script_verify_p2sh_multisig#17",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 0,
+          "tx_to": {
+            "ref": "$tx_non_null_dummy"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_non_null_dummy"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_NULLDUMMY"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": false
+      }
+    },
+    {
+      "description": "Destroy precomputed transaction data for non-null dummy P2SH multisig",
+      "request": {
+        "id": "script_verify_p2sh_multisig#18",
+        "method": "btck_precomputed_transaction_data_destroy",
+        "params": {
+          "precomputed_txdata": {
+            "ref": "$precomp_non_null_dummy"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy non-null dummy P2SH multisig transaction",
+      "request": {
+        "id": "script_verify_p2sh_multisig#19",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx_non_null_dummy"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy P2SH multisig script pubkey",
+      "request": {
+        "id": "script_verify_p2sh_multisig#20",
+        "method": "btck_script_pubkey_destroy",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    }
+  ]
+}

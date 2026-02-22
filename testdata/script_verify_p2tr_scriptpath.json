@@ -1,0 +1,396 @@
+{
+  "name": "script_verify_p2tr_scriptpath",
+  "description": "Verifies a mainnet P2TR script-path spend at input index 1 of a two-input transaction. Requires two spent outputs for precomputed transaction data. Valid script-path witness passes with P2SH + WITNESS + TAPROOT and all flags; corrupted sig fails when TAPROOT is enforced, passes with P2SH + WITNESS only. Mainnet tx 1ba232a8bf936cf24155292c9a4330298278f572bacc78455eb68e3552197c30.",
+  "stateful": true,
+  "tests": [
+    {
+      "description": "Create script pubkey for spent output at index 0",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#1",
+        "method": "btck_script_pubkey_create",
+        "params": {
+          "script_pubkey": "51207ee3c4ab9c8144be0e39fc849fab95e70da97fb0d70754b34553c25f9d325fa0"
+        },
+        "ref": "$spk_0"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$spk_0"
+        }
+      }
+    },
+    {
+      "description": "Create script pubkey for spent output at index 1 (the P2TR output being verified)",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#2",
+        "method": "btck_script_pubkey_create",
+        "params": {
+          "script_pubkey": "5120e687f4f55e3de5264cf4c4f43b53edb5c26e4adae3a3098ce918a663582785bd"
+        },
+        "ref": "$spk_1"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$spk_1"
+        }
+      }
+    },
+    {
+      "description": "Create spent output at index 0 (amount=1757828)",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#3",
+        "method": "btck_transaction_output_create",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk_0"
+          },
+          "amount": 1757828
+        },
+        "ref": "$spent_output_0"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$spent_output_0"
+        }
+      }
+    },
+    {
+      "description": "Create spent output at index 1 (the P2TR output being spent, amount=503185)",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#4",
+        "method": "btck_transaction_output_create",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk_1"
+          },
+          "amount": 503185
+        },
+        "ref": "$spent_output_1"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$spent_output_1"
+        }
+      }
+    },
+    {
+      "description": "Create valid P2TR script-path transaction",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#5",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "02000000000102761402258bf42275f52db288dbbc8fdfe30b35dea86c5425a57feef1a4008b0b0100000000ffffffff3847ba0ccc4e1b63ed2f3b4a677bd247940f4d5669cc91d9a4eb096e7615badc0000000000ffffffff0291ad070000000000225120059715a12766bbbee8529b53dce51fe708e9895f50c6babec988c7917ff5958464d11a0000000000225120bee1246f13735551e5e5c2b5631014501a6c77f8ee2d16d33dc109096f22b2a40140ac4e4af854be645890275c8144869343752d5ceee9b361cfab3de0726c10a449cc7491a295417f7c457961fdde59bde483330364b42fddddeef65cd1d97150fc0440b78c0a5065343d451a93dcb499edd3d8994697932322be5e27fa218f5a99be8484a8ef802c3054dee442baced3c170b8afe18ec9758c860876fe4f06a5e3ccb240984299fc968b71d999354af2e991e089908adec84e1b1f04da8149aa0ffce28311b363dfd2dfc456de77746919c263e95a14952080f433ddb87b13b884812bda4420b5095be39b9f2f96a77235854af7635dd09d0324569e9b3d587fe5fb7c44720cad202b74c2011af089c849383ee527c72325de52df6a788428b68d49e9174053aabaac41c150929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0675a94484b3d55d76af4a2275d327a47c1ec5c7d2232596a09fc883d40bb237e00000000"
+        },
+        "ref": "$tx_valid"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx_valid"
+        }
+      }
+    },
+    {
+      "description": "Create precomputed transaction data for valid P2TR script-path (with both spent outputs for taproot)",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#6",
+        "method": "btck_precomputed_transaction_data_create",
+        "params": {
+          "tx_to": {
+            "ref": "$tx_valid"
+          },
+          "spent_outputs": [
+            {
+              "ref": "$spent_output_0"
+            },
+            {
+              "ref": "$spent_output_1"
+            }
+          ]
+        },
+        "ref": "$precomp_valid"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$precomp_valid"
+        }
+      }
+    },
+    {
+      "description": "Verify valid P2TR script-path at input index 1 with btck_ScriptVerificationFlags_P2SH + btck_ScriptVerificationFlags_WITNESS + btck_ScriptVerificationFlags_TAPROOT - passes",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#7",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk_1"
+          },
+          "amount": 503185,
+          "tx_to": {
+            "ref": "$tx_valid"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_valid"
+          },
+          "input_index": 1,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_WITNESS",
+            "btck_ScriptVerificationFlags_TAPROOT"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Verify valid P2TR script-path at input index 1 with all flags - passes",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#8",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk_1"
+          },
+          "amount": 503185,
+          "tx_to": {
+            "ref": "$tx_valid"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_valid"
+          },
+          "input_index": 1,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_DERSIG",
+            "btck_ScriptVerificationFlags_NULLDUMMY",
+            "btck_ScriptVerificationFlags_CHECKLOCKTIMEVERIFY",
+            "btck_ScriptVerificationFlags_CHECKSEQUENCEVERIFY",
+            "btck_ScriptVerificationFlags_WITNESS",
+            "btck_ScriptVerificationFlags_TAPROOT"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroy precomputed transaction data for valid P2TR script-path",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#9",
+        "method": "btck_precomputed_transaction_data_destroy",
+        "params": {
+          "precomputed_txdata": {
+            "ref": "$precomp_valid"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy valid P2TR script-path transaction",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#10",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx_valid"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Create P2TR script-path transaction with corrupted signature (one byte flipped in script-path witness)",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#11",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "02000000000102761402258bf42275f52db288dbbc8fdfe30b35dea86c5425a57feef1a4008b0b0100000000ffffffff3847ba0ccc4e1b63ed2f3b4a677bd247940f4d5669cc91d9a4eb096e7615badc0000000000ffffffff0291ad070000000000225120059715a12766bbbee8529b53dce51fe708e9895f50c6babec988c7917ff5958464d11a0000000000225120bee1246f13735551e5e5c2b5631014501a6c77f8ee2d16d33dc109096f22b2a40140ac4e4af854be645890275c8144869343752d5ceee9b361cfab3de0726c10a449cc7491a295417f7c457961fdde59bde483330364b42fddddeef65cd1d97150fc0440b78c0a5065343d451a93dcb499edd3d8994697932322be5e27fa218f5a99be8484a8ef802c3054dee442baced3c170b8afe18ec9758c860876fe4f06a5e3ccb240984299fc968b71d999354af2e991e089908adec84e1b1f04da8149aa0ffce28211b363dfd2dfc456de77746919c263e95a14952080f433ddb87b13b884812bda4420b5095be39b9f2f96a77235854af7635dd09d0324569e9b3d587fe5fb7c44720cad202b74c2011af089c849383ee527c72325de52df6a788428b68d49e9174053aabaac41c150929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0675a94484b3d55d76af4a2275d327a47c1ec5c7d2232596a09fc883d40bb237e00000000"
+        },
+        "ref": "$tx_corrupted_sig"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx_corrupted_sig"
+        }
+      }
+    },
+    {
+      "description": "Create precomputed transaction data for corrupted sig P2TR script-path (with both spent outputs)",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#12",
+        "method": "btck_precomputed_transaction_data_create",
+        "params": {
+          "tx_to": {
+            "ref": "$tx_corrupted_sig"
+          },
+          "spent_outputs": [
+            {
+              "ref": "$spent_output_0"
+            },
+            {
+              "ref": "$spent_output_1"
+            }
+          ]
+        },
+        "ref": "$precomp_corrupted_sig"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$precomp_corrupted_sig"
+        }
+      }
+    },
+    {
+      "description": "Verify P2TR script-path with corrupted signature at input index 1 and btck_ScriptVerificationFlags_P2SH + btck_ScriptVerificationFlags_WITNESS + btck_ScriptVerificationFlags_TAPROOT - fails",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#13",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk_1"
+          },
+          "amount": 503185,
+          "tx_to": {
+            "ref": "$tx_corrupted_sig"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_corrupted_sig"
+          },
+          "input_index": 1,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_WITNESS",
+            "btck_ScriptVerificationFlags_TAPROOT"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": false
+      }
+    },
+    {
+      "description": "Verify P2TR script-path with corrupted signature at input index 1 and btck_ScriptVerificationFlags_P2SH + btck_ScriptVerificationFlags_WITNESS only - passes (taproot not enforced)",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#14",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk_1"
+          },
+          "amount": 503185,
+          "tx_to": {
+            "ref": "$tx_corrupted_sig"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp_corrupted_sig"
+          },
+          "input_index": 1,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_WITNESS"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroy precomputed transaction data for corrupted sig P2TR script-path",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#15",
+        "method": "btck_precomputed_transaction_data_destroy",
+        "params": {
+          "precomputed_txdata": {
+            "ref": "$precomp_corrupted_sig"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy corrupted sig P2TR script-path transaction",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#16",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx_corrupted_sig"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy spent output at index 0",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#17",
+        "method": "btck_transaction_output_destroy",
+        "params": {
+          "transaction_output": {
+            "ref": "$spent_output_0"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy spent output at index 1",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#18",
+        "method": "btck_transaction_output_destroy",
+        "params": {
+          "transaction_output": {
+            "ref": "$spent_output_1"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy script pubkey for spent output at index 0",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#19",
+        "method": "btck_script_pubkey_destroy",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk_0"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy script pubkey for spent output at index 1",
+      "request": {
+        "id": "script_verify_p2tr_scriptpath#20",
+        "method": "btck_script_pubkey_destroy",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk_1"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    }
+  ]
+}

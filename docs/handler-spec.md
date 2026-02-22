@@ -102,9 +102,58 @@ Many operations return objects (contexts, blocks, chains, etc.) that must persis
 The conformance tests are organized into suites, each testing a specific aspect of the Bitcoin Kernel bindings. Test files are located in [`../testdata/`](../testdata/).
 
 ### Script Verification Success Cases
-**File:** [`script_verify_success.json`](../testdata/script_verify_success.json)
 
 Test cases where the script verification operation executes successfully and returns a boolean result (true for valid scripts, false for invalid scripts).
+
+#### Script Verification — P2PKH
+**File:** [`script_verify_p2pkh.json`](../testdata/script_verify_p2pkh.json)
+
+Verifies a real mainnet P2PKH output against three variants of the spending transaction: a valid signature (passes with no flags and with all pre-taproot flags), a corrupted signature (always fails), and a non-DER signature (passes without `btck_ScriptVerificationFlags_DERSIG`, fails when `btck_ScriptVerificationFlags_DERSIG` is set).
+
+#### Script Verification — P2SH Multisig
+**File:** [`script_verify_p2sh_multisig.json`](../testdata/script_verify_p2sh_multisig.json)
+
+Verifies a real mainnet P2SH 2-of-3 multisig output against three spending transaction variants: valid signatures (passes with `btck_ScriptVerificationFlags_P2SH` and with all pre-taproot flags), a corrupted signature (fails with `btck_ScriptVerificationFlags_P2SH` but passes without it), and a non-null dummy stack element (passes with `btck_ScriptVerificationFlags_P2SH` alone, fails when `btck_ScriptVerificationFlags_NULLDUMMY` is also set).
+
+#### Script Verification — CLTV
+**File:** [`script_verify_cltv.json`](../testdata/script_verify_cltv.json)
+
+Verifies a P2SH output containing `OP_CHECKLOCKTIMEVERIFY` locked to block 100. The transaction with `locktime=100` passes with `btck_ScriptVerificationFlags_P2SH` + `btck_ScriptVerificationFlags_CHECKLOCKTIMEVERIFY` and with all pre-taproot flags. The transaction with `locktime=50` fails when `btck_ScriptVerificationFlags_CHECKLOCKTIMEVERIFY` is enforced but passes when only `btck_ScriptVerificationFlags_P2SH` is set.
+
+#### Script Verification — CSV
+**File:** [`script_verify_csv.json`](../testdata/script_verify_csv.json)
+
+Verifies a P2SH output containing `OP_CHECKSEQUENCEVERIFY` locked to sequence 10. The transaction with `sequence=10` passes with `btck_ScriptVerificationFlags_P2SH` + `btck_ScriptVerificationFlags_CHECKSEQUENCEVERIFY` and with all pre-taproot flags. The transaction with `sequence=5` fails when `btck_ScriptVerificationFlags_CHECKSEQUENCEVERIFY` is enforced but passes when only `btck_ScriptVerificationFlags_P2SH` is set.
+
+#### Script Verification — P2SH-P2WPKH
+**File:** [`script_verify_p2sh_p2wpkh.json`](../testdata/script_verify_p2sh_p2wpkh.json)
+
+Verifies a real mainnet P2SH-wrapped P2WPKH output against two spending transaction variants: a valid witness signature (passes with `btck_ScriptVerificationFlags_P2SH` + `btck_ScriptVerificationFlags_WITNESS` and with all pre-taproot flags) and a corrupted witness signature (fails with `btck_ScriptVerificationFlags_WITNESS` enforced, passes with `btck_ScriptVerificationFlags_P2SH` only).
+
+#### Script Verification — P2SH-P2WSH
+**File:** [`script_verify_p2sh_p2wsh.json`](../testdata/script_verify_p2sh_p2wsh.json)
+
+Verifies a real mainnet P2SH-wrapped P2WSH output against two spending transaction variants: a valid 2-of-3 multisig witness (passes with `btck_ScriptVerificationFlags_P2SH` + `btck_ScriptVerificationFlags_WITNESS` and with all pre-taproot flags) and a corrupted witness signature (fails with `btck_ScriptVerificationFlags_WITNESS` enforced, passes with `btck_ScriptVerificationFlags_P2SH` only).
+
+#### Script Verification — P2WPKH
+**File:** [`script_verify_p2wpkh.json`](../testdata/script_verify_p2wpkh.json)
+
+Verifies a real mainnet native P2WPKH output using the same transaction with two different `amount` values: the correct amount (5003 satoshis) passes with `btck_ScriptVerificationFlags_P2SH` + `btck_ScriptVerificationFlags_WITNESS` and with all pre-taproot flags; an incorrect amount (5002 satoshis) causes the witness commitment check to fail when `btck_ScriptVerificationFlags_WITNESS` is enforced, but passes with `btck_ScriptVerificationFlags_P2SH` only.
+
+#### Script Verification — P2WSH
+**File:** [`script_verify_p2wsh.json`](../testdata/script_verify_p2wsh.json)
+
+Verifies a real mainnet native P2WSH output at input index 1 of a two-input transaction. A valid HTLC-style witness script passes with `btck_ScriptVerificationFlags_P2SH` + `btck_ScriptVerificationFlags_WITNESS` and with all pre-taproot flags. A transaction with a corrupted witness signature fails with `btck_ScriptVerificationFlags_WITNESS` enforced, but passes with `btck_ScriptVerificationFlags_P2SH` only.
+
+#### Script Verification — P2TR Key-Path
+**File:** [`script_verify_p2tr_keypath.json`](../testdata/script_verify_p2tr_keypath.json)
+
+Verifies a real mainnet P2TR key-path spend. Requires one spent output to build precomputed transaction data for Taproot. A valid Schnorr signature passes with `btck_ScriptVerificationFlags_P2SH` + `btck_ScriptVerificationFlags_WITNESS` + `btck_ScriptVerificationFlags_TAPROOT` and with all flags. A corrupted Schnorr signature fails when `btck_ScriptVerificationFlags_TAPROOT` is enforced but passes with `btck_ScriptVerificationFlags_P2SH` + `btck_ScriptVerificationFlags_WITNESS` only.
+
+#### Script Verification — P2TR Script-Path
+**File:** [`script_verify_p2tr_scriptpath.json`](../testdata/script_verify_p2tr_scriptpath.json)
+
+Verifies a real mainnet P2TR script-path spend at input index 1 of a two-input transaction. Requires two spent outputs (one per input) to build precomputed transaction data for Taproot. A valid script-path witness passes with `btck_ScriptVerificationFlags_P2SH` + `btck_ScriptVerificationFlags_WITNESS` + `btck_ScriptVerificationFlags_TAPROOT` and with all flags. A corrupted signature fails when `btck_ScriptVerificationFlags_TAPROOT` is enforced but passes with `btck_ScriptVerificationFlags_P2SH` + `btck_ScriptVerificationFlags_WITNESS` only.
 
 ### Script Verification Error Cases
 **File:** [`script_verify_errors.json`](../testdata/script_verify_errors.json)
@@ -276,18 +325,46 @@ Gets the block hash from a block tree entry.
 
 ---
 
-### Script Verification
+### Script Pubkey Operations
+
+#### `btck_script_pubkey_create`
+
+Creates a script pubkey object from hex-encoded data.
+
+**Parameters:**
+- `script_pubkey` (string, required): Hex-encoded script pubkey data
+
+**Result:** Reference type - Object containing the reference name from the request `ref` field (e.g., `{"ref": "$script_pubkey"}`)
+
+**Error:** `{}` when operation fails (C API returned null)
+
+---
+
+#### `btck_script_pubkey_destroy`
+
+Destroys a script pubkey and frees associated resources.
+
+**Parameters:**
+- `script_pubkey` (reference, required): Script pubkey reference to destroy
+
+**Result:** `null` (void operation)
+
+**Error:** `null` (cannot return error)
+
+---
 
 #### `btck_script_pubkey_verify`
 
 Verifies a script pubkey against spending conditions.
 
 **Parameters:**
-- `script_pubkey` (string): Hex-encoded script pubkey to be spent
-- `amount` (number): Amount of the script pubkey's associated output. May be zero if the witness flag is not set
-- `tx_to` (string): Hex-encoded transaction spending the script_pubkey
-- `input_index` (number): Index of the input in tx_to spending the script_pubkey
-- `flags` (array of strings): Script verification flags controlling validation constraints. Valid flags include:
+- `script_pubkey` (reference, required): Reference to a ScriptPubkey from `btck_script_pubkey_create`
+- `amount` (number, required): Amount of the script pubkey's associated output. May be zero if the witness flag is not set
+- `tx_to` (reference, required): Reference to a Transaction from `btck_transaction_create`
+- `precomputed_txdata` (reference, optional): Reference to PrecomputedTransactionData from `btck_precomputed_transaction_data_create`. Required when the taproot flag is set
+- `input_index` (number, required): Index of the input in tx_to spending the script_pubkey
+- `flags` (array of strings, required): Script verification flags controlling validation constraints. Valid flags include:
+  - `btck_ScriptVerificationFlags_NONE`
   - `btck_ScriptVerificationFlags_P2SH`
   - `btck_ScriptVerificationFlags_DERSIG`
   - `btck_ScriptVerificationFlags_NULLDUMMY`
@@ -295,12 +372,95 @@ Verifies a script pubkey against spending conditions.
   - `btck_ScriptVerificationFlags_CHECKSEQUENCEVERIFY`
   - `btck_ScriptVerificationFlags_WITNESS`
   - `btck_ScriptVerificationFlags_TAPROOT`
-- `spent_outputs` (array of objects): Array of outputs spent by the transaction. May be empty if the taproot flag is not set. Each object contains:
-  - `script_pubkey` (string): Hex-encoded script pubkey of the spent output
-  - `amount` (number): Amount in satoshis of the spent output
 
 **Result:** Boolean - true if script is valid, false if invalid
 
 **Error:** On error, returns error code with type `btck_ScriptVerifyStatus` and member can be one of:
 - `ERROR_INVALID_FLAGS_COMBINATION` - Invalid or inconsistent verification flags were provided. This occurs when the supplied `script_verify_flags` combination violates internal consistency rules.
 - `ERROR_SPENT_OUTPUTS_REQUIRED` - Spent outputs are required but were not provided (e.g., for Taproot verification).
+
+---
+
+### Transaction Operations
+
+#### `btck_transaction_create`
+
+Creates a transaction object from raw hex-encoded transaction data.
+
+**Parameters:**
+- `raw_transaction` (string, required): Hex-encoded raw transaction data
+
+**Result:** Reference type - Object containing the reference name from the request `ref` field (e.g., `{"ref": "$transaction"}`)
+
+**Error:** `{}` when operation fails (C API returned null, e.g., invalid transaction bytes)
+
+---
+
+#### `btck_transaction_destroy`
+
+Destroys a transaction and frees associated resources.
+
+**Parameters:**
+- `transaction` (reference, required): Transaction reference to destroy
+
+**Result:** `null` (void operation)
+
+**Error:** `null` (cannot return error)
+
+---
+
+### Transaction Output Operations
+
+#### `btck_transaction_output_create`
+
+Creates a transaction output from a script pubkey reference and amount.
+
+**Parameters:**
+- `script_pubkey` (reference, required): Reference to a ScriptPubkey from `btck_script_pubkey_create`
+- `amount` (number, required): Amount in satoshis
+
+**Result:** Reference type - Object containing the reference name from the request `ref` field (e.g., `{"ref": "$transaction_output"}`)
+
+**Error:** `null` (cannot return error)
+
+---
+
+#### `btck_transaction_output_destroy`
+
+Destroys a transaction output and frees associated resources.
+
+**Parameters:**
+- `transaction_output` (reference, required): Transaction output reference to destroy
+
+**Result:** `null` (void operation)
+
+**Error:** `null` (cannot return error)
+
+---
+
+### Precomputed Transaction Data Operations
+
+#### `btck_precomputed_transaction_data_create`
+
+Creates precomputed transaction data for script verification. Precomputed data is reusable when verifying multiple inputs of the same transaction.
+
+**Parameters:**
+- `tx_to` (reference, required): Reference to a Transaction from `btck_transaction_create`
+- `spent_outputs` (array of references, optional): Array of references to TransactionOutput objects from `btck_transaction_output_create`. Required when `btck_ScriptVerificationFlags_TAPROOT` is set
+
+**Result:** Reference type - Object containing the reference name from the request `ref` field (e.g., `{"ref": "$precomputed_txdata"}`)
+
+**Error:** `{}` when operation fails (C API returned null)
+
+---
+
+#### `btck_precomputed_transaction_data_destroy`
+
+Destroys precomputed transaction data and frees associated resources.
+
+**Parameters:**
+- `precomputed_txdata` (reference, required): Precomputed transaction data reference to destroy
+
+**Result:** `null` (void operation)
+
+**Error:** `null` (cannot return error)

@@ -1,0 +1,213 @@
+{
+  "name": "script_verify_p2wpkh",
+  "description": "Verifies a mainnet native P2WPKH output with two amount values: correct amount (5003 sat) passes with P2SH + WITNESS and all pre-taproot flags; wrong amount (5002 sat) fails the witness commitment check when WITNESS is enforced, passes with P2SH only. Mainnet tx 00000000102d4e899ec7cc3656d91ab83aa8e95807dabb90fbe16a1a9e70b6ab.",
+  "stateful": true,
+  "tests": [
+    {
+      "description": "Create native P2WPKH script pubkey",
+      "request": {
+        "id": "script_verify_p2wpkh#1",
+        "method": "btck_script_pubkey_create",
+        "params": {
+          "script_pubkey": "0014141e536966344275512b7c2f49be5b8fbe7fbd05"
+        },
+        "ref": "$spk"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$spk"
+        }
+      }
+    },
+    {
+      "description": "Create native P2WPKH transaction",
+      "request": {
+        "id": "script_verify_p2wpkh#2",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "0200000000010118cd99a3898c2b63da66ec9b7e1d15928453a0b3c2fa74fd74883042000000000000000000ffffffff011d13000000000000160014f222ad02300df72ab7129602f279b47d83b453ca02483045022100b1da3d290132155acd68dafee7c794e84922f364cf9acb1b65e806dc41bd702b02200af6003caf19a291488649be0396edb1274888beb5bb3a96e1d8e6f4903e0e7401210364b35b722e1e3590575994dad5c6c25b8b24d3777964a28cedea41bbaa297da555d2d73d"
+        },
+        "ref": "$tx"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx"
+        }
+      }
+    },
+    {
+      "description": "Create precomputed transaction data for native P2WPKH",
+      "request": {
+        "id": "script_verify_p2wpkh#3",
+        "method": "btck_precomputed_transaction_data_create",
+        "params": {
+          "tx_to": {
+            "ref": "$tx"
+          }
+        },
+        "ref": "$precomp"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$precomp"
+        }
+      }
+    },
+    {
+      "description": "Verify native P2WPKH with correct amount (5003) and btck_ScriptVerificationFlags_P2SH + btck_ScriptVerificationFlags_WITNESS - passes",
+      "request": {
+        "id": "script_verify_p2wpkh#4",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 5003,
+          "tx_to": {
+            "ref": "$tx"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_WITNESS"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Verify native P2WPKH with correct amount (5003) and all pre-taproot flags - passes",
+      "request": {
+        "id": "script_verify_p2wpkh#5",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 5003,
+          "tx_to": {
+            "ref": "$tx"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_DERSIG",
+            "btck_ScriptVerificationFlags_NULLDUMMY",
+            "btck_ScriptVerificationFlags_CHECKLOCKTIMEVERIFY",
+            "btck_ScriptVerificationFlags_CHECKSEQUENCEVERIFY",
+            "btck_ScriptVerificationFlags_WITNESS"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Verify native P2WPKH with wrong amount (5002) and btck_ScriptVerificationFlags_P2SH + btck_ScriptVerificationFlags_WITNESS - fails (amount mismatch in witness commitment)",
+      "request": {
+        "id": "script_verify_p2wpkh#6",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 5002,
+          "tx_to": {
+            "ref": "$tx"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH",
+            "btck_ScriptVerificationFlags_WITNESS"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": false
+      }
+    },
+    {
+      "description": "Verify native P2WPKH with wrong amount (5002) and btck_ScriptVerificationFlags_P2SH only - passes (witness not enforced)",
+      "request": {
+        "id": "script_verify_p2wpkh#7",
+        "method": "btck_script_pubkey_verify",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 5002,
+          "tx_to": {
+            "ref": "$tx"
+          },
+          "precomputed_txdata": {
+            "ref": "$precomp"
+          },
+          "input_index": 0,
+          "flags": [
+            "btck_ScriptVerificationFlags_P2SH"
+          ]
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroy precomputed transaction data for native P2WPKH",
+      "request": {
+        "id": "script_verify_p2wpkh#8",
+        "method": "btck_precomputed_transaction_data_destroy",
+        "params": {
+          "precomputed_txdata": {
+            "ref": "$precomp"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy native P2WPKH transaction",
+      "request": {
+        "id": "script_verify_p2wpkh#9",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    },
+    {
+      "description": "Destroy native P2WPKH script pubkey",
+      "request": {
+        "id": "script_verify_p2wpkh#10",
+        "method": "btck_script_pubkey_destroy",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          }
+        }
+      },
+      "expected_response": {
+        "result": null
+      }
+    }
+  ]
+}
