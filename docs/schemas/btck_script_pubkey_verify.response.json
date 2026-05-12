@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$ref": "./shared.json#/$defs/BooleanResponse",
+      "description": "true if script is valid, false if invalid"
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["error"],
+      "properties": {
+        "result": {
+          "type": "null"
+        },
+        "error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "code"
+          ],
+          "properties": {
+            "code": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "member"
+              ],
+              "properties": {
+                "type": {
+                  "const": "btck_ScriptVerifyStatus"
+                },
+                "member": {
+                  "enum": [
+                    "ERROR_INVALID_FLAGS_COMBINATION",
+                    "ERROR_SPENT_OUTPUTS_REQUIRED"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "description": "On error, returns `{\"code\": {\"type\": \"btck_ScriptVerifyStatus\", \"member\": ...}}` where `member` can be one of:\n- `ERROR_INVALID_FLAGS_COMBINATION` - Invalid or inconsistent verification flags were provided. This occurs when the supplied `script_verify_flags` combination violates internal consistency rules.\n- `ERROR_SPENT_OUTPUTS_REQUIRED` - Spent outputs are required but were not provided (e.g., for Taproot verification)."
+    }
+  ]
+}

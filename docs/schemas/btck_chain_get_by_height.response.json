@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$ref": "./shared.json#/$defs/RefResponse",
+      "description": "Contains the returned block tree entry (e.g., `{\"ref\": \"$block_tree_entry\"}`). The returned block tree entry reference depends on the lifetime of the parent chain reference and does not require an explicit destroy call."
+    },
+    {
+      "$ref": "./shared.json#/$defs/GenericErrorResponse",
+      "description": "`{}` if the requested height is out of bounds"
+    }
+  ]
+}

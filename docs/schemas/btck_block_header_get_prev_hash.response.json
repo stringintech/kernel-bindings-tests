@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "./shared.json#/$defs/RefResponse",
+  "description": "Contains the returned previous block hash (e.g., `{\"ref\": \"$prev_hash\"}`). The returned block hash reference depends on the lifetime of the parent block header and does not require an explicit destroy call."
+}

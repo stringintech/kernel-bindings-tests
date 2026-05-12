@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "./shared.json#/$defs/RefResponse",
+  "description": "Contains the returned active chain (e.g., `{\"ref\": \"$chain\"}`). The returned chain reference depends on the lifetime of the parent chainstate manager and does not require an explicit destroy call."
+}

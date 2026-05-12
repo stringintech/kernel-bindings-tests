@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "./shared.json#/$defs/RefResponse",
+  "description": "Contains the returned transaction output (e.g., `{\"ref\": \"$transaction_output\"}`). The returned transaction output reference is a view that depends on the lifetime of the parent transaction and does not require an explicit destroy call."
+}
