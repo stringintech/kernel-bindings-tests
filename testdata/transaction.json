@@ -1,0 +1,310 @@
+{
+  "title": "Transaction Operations",
+  "description": "Covers transaction parsing, invalid-input rejection, txid and serialization getters, input and output access by index, copying, and object cleanup",
+  "stateful": true,
+  "tests": [
+    {
+      "description": "Rejects empty raw transaction bytes",
+      "request": {
+        "id": "transaction#1",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": ""
+        },
+        "ref": "$empty_tx"
+      },
+      "expected_response": {
+        "error": {}
+      }
+    },
+    {
+      "description": "Rejects incomplete transaction bytes",
+      "request": {
+        "id": "transaction#2",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "0100000001000000000000000000000000000000000000000000000000000000000000000000ffffffff"
+        },
+        "ref": "$invalid_tx"
+      },
+      "expected_response": {
+        "error": {}
+      }
+    },
+    {
+      "description": "Creates a transaction from raw bytes",
+      "request": {
+        "id": "transaction#3",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000"
+        },
+        "ref": "$tx"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx"
+        }
+      }
+    },
+    {
+      "description": "Gets the txid",
+      "request": {
+        "id": "transaction#4",
+        "method": "btck_transaction_get_txid",
+        "params": {
+          "transaction": {
+            "ref": "$tx"
+          }
+        },
+        "ref": "$tx_txid"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx_txid"
+        }
+      }
+    },
+    {
+      "description": "Verifies the serialized txid",
+      "request": {
+        "id": "transaction#5",
+        "method": "btck_txid_to_bytes",
+        "params": {
+          "txid": {
+            "ref": "$tx_txid"
+          }
+        }
+      },
+      "expected_response": {
+        "result": "3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a"
+      }
+    },
+    {
+      "description": "Verifies the transaction input count",
+      "request": {
+        "id": "transaction#6",
+        "method": "btck_transaction_count_inputs",
+        "params": {
+          "transaction": {
+            "ref": "$tx"
+          }
+        }
+      },
+      "expected_response": {
+        "result": 1
+      }
+    },
+    {
+      "description": "Verifies the transaction output count",
+      "request": {
+        "id": "transaction#7",
+        "method": "btck_transaction_count_outputs",
+        "params": {
+          "transaction": {
+            "ref": "$tx"
+          }
+        }
+      },
+      "expected_response": {
+        "result": 1
+      }
+    },
+    {
+      "description": "Gets the first transaction input by index",
+      "request": {
+        "id": "transaction#8",
+        "method": "btck_transaction_get_input_at",
+        "params": {
+          "transaction": {
+            "ref": "$tx"
+          },
+          "input_index": 0
+        },
+        "ref": "$in0"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$in0"
+        }
+      }
+    },
+    {
+      "description": "Gets the out point from the indexed input",
+      "request": {
+        "id": "transaction#9",
+        "method": "btck_transaction_input_get_out_point",
+        "params": {
+          "transaction_input": {
+            "ref": "$in0"
+          }
+        },
+        "ref": "$outpoint0"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$outpoint0"
+        }
+      }
+    },
+    {
+      "description": "Verifies the out point index from the indexed input",
+      "request": {
+        "id": "transaction#10",
+        "method": "btck_transaction_out_point_get_index",
+        "params": {
+          "transaction_out_point": {
+            "ref": "$outpoint0"
+          }
+        }
+      },
+      "expected_response": {
+        "result": 4294967295
+      }
+    },
+    {
+      "description": "Verifies transaction serialization round-trips to the original bytes",
+      "request": {
+        "id": "transaction#11",
+        "method": "btck_transaction_to_bytes",
+        "params": {
+          "transaction": {
+            "ref": "$tx"
+          }
+        }
+      },
+      "expected_response": {
+        "result": "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000"
+      }
+    },
+    {
+      "description": "Gets the first transaction output by index",
+      "request": {
+        "id": "transaction#12",
+        "method": "btck_transaction_get_output_at",
+        "params": {
+          "transaction": {
+            "ref": "$tx"
+          },
+          "output_index": 0
+        },
+        "ref": "$out0"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$out0"
+        }
+      }
+    },
+    {
+      "description": "Verifies the amount from the indexed output",
+      "request": {
+        "id": "transaction#13",
+        "method": "btck_transaction_output_get_amount",
+        "params": {
+          "transaction_output": {
+            "ref": "$out0"
+          }
+        }
+      },
+      "expected_response": {
+        "result": 5000000000
+      }
+    },
+    {
+      "description": "Copies the transaction",
+      "request": {
+        "id": "transaction#14",
+        "method": "btck_transaction_copy",
+        "params": {
+          "transaction": {
+            "ref": "$tx"
+          }
+        },
+        "ref": "$tx_copy"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx_copy"
+        }
+      }
+    },
+    {
+      "description": "Verifies copied transaction serialization matches the original bytes",
+      "request": {
+        "id": "transaction#15",
+        "method": "btck_transaction_to_bytes",
+        "params": {
+          "transaction": {
+            "ref": "$tx_copy"
+          }
+        }
+      },
+      "expected_response": {
+        "result": "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000"
+      }
+    },
+    {
+      "description": "Gets the txid of the copied transaction",
+      "request": {
+        "id": "transaction#16",
+        "method": "btck_transaction_get_txid",
+        "params": {
+          "transaction": {
+            "ref": "$tx_copy"
+          }
+        },
+        "ref": "$tx_copy_txid"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx_copy_txid"
+        }
+      }
+    },
+    {
+      "description": "Verifies the txid of the copied transaction equals the original txid",
+      "request": {
+        "id": "transaction#17",
+        "method": "btck_txid_equals",
+        "params": {
+          "txid1": {
+            "ref": "$tx_txid"
+          },
+          "txid2": {
+            "ref": "$tx_copy_txid"
+          }
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroys the original transaction after comparing txids",
+      "request": {
+        "id": "transaction#18",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Destroys the copied transaction",
+      "request": {
+        "id": "transaction#19",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx_copy"
+          }
+        }
+      },
+      "expected_response": {}
+    }
+  ]
+}

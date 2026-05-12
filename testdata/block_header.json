@@ -1,0 +1,298 @@
+{
+  "title": "Block Header Operations",
+  "description": "Covers block header parsing, invalid-input rejection, serialization, field getters, copy equality, and object cleanup using the mainnet genesis block header",
+  "stateful": true,
+  "tests": [
+    {
+      "description": "Rejects empty raw block header bytes",
+      "request": {
+        "id": "block_header#1",
+        "method": "btck_block_header_create",
+        "params": {
+          "raw_block_header": ""
+        },
+        "ref": "$empty_header"
+      },
+      "expected_response": {
+        "error": {}
+      }
+    },
+    {
+      "description": "Rejects raw header bytes shorter than the required 80-byte block header",
+      "request": {
+        "id": "block_header#2",
+        "method": "btck_block_header_create",
+        "params": {
+          "raw_block_header": "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b"
+        },
+        "ref": "$short_header"
+      },
+      "expected_response": {
+        "error": {}
+      }
+    },
+    {
+      "description": "Creates a header from the exact 80-byte mainnet genesis block header",
+      "request": {
+        "id": "block_header#3",
+        "method": "btck_block_header_create",
+        "params": {
+          "raw_block_header": "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
+        },
+        "ref": "$header"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$header"
+        }
+      }
+    },
+    {
+      "description": "Verifies block header serialization round-trips to the original bytes",
+      "request": {
+        "id": "block_header#4",
+        "method": "btck_block_header_to_bytes",
+        "params": {
+          "header": {
+            "ref": "$header"
+          }
+        }
+      },
+      "expected_response": {
+        "result": "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
+      }
+    },
+    {
+      "description": "Gets the hash for the exact genesis block header",
+      "request": {
+        "id": "block_header#5",
+        "method": "btck_block_header_get_hash",
+        "params": {
+          "header": {
+            "ref": "$header"
+          }
+        },
+        "ref": "$header_hash"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$header_hash"
+        }
+      }
+    },
+    {
+      "description": "Verifies the serialized exact header hash matches the mainnet genesis block hash",
+      "request": {
+        "id": "block_header#6",
+        "method": "btck_block_hash_to_bytes",
+        "params": {
+          "block_hash": {
+            "ref": "$header_hash"
+          }
+        }
+      },
+      "expected_response": {
+        "result": "6fe28c0ab6f1b372c1a6a246ae63f74f931e8365e15a089c68d6190000000000"
+      }
+    },
+    {
+      "description": "Gets the previous block hash from the genesis block header",
+      "request": {
+        "id": "block_header#7",
+        "method": "btck_block_header_get_prev_hash",
+        "params": {
+          "header": {
+            "ref": "$header"
+          }
+        },
+        "ref": "$prev_hash"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$prev_hash"
+        }
+      }
+    },
+    {
+      "description": "Verifies the genesis previous block hash is all zero bytes",
+      "request": {
+        "id": "block_header#8",
+        "method": "btck_block_hash_to_bytes",
+        "params": {
+          "block_hash": {
+            "ref": "$prev_hash"
+          }
+        }
+      },
+      "expected_response": {
+        "result": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "description": "Verifies the genesis block header version",
+      "request": {
+        "id": "block_header#9",
+        "method": "btck_block_header_get_version",
+        "params": {
+          "header": {
+            "ref": "$header"
+          }
+        }
+      },
+      "expected_response": {
+        "result": 1
+      }
+    },
+    {
+      "description": "Verifies the genesis block header timestamp",
+      "request": {
+        "id": "block_header#10",
+        "method": "btck_block_header_get_timestamp",
+        "params": {
+          "header": {
+            "ref": "$header"
+          }
+        }
+      },
+      "expected_response": {
+        "result": 1231006505
+      }
+    },
+    {
+      "description": "Verifies the genesis block header proof-of-work bits",
+      "request": {
+        "id": "block_header#11",
+        "method": "btck_block_header_get_bits",
+        "params": {
+          "header": {
+            "ref": "$header"
+          }
+        }
+      },
+      "expected_response": {
+        "result": 486604799
+      }
+    },
+    {
+      "description": "Verifies the genesis block header nonce",
+      "request": {
+        "id": "block_header#12",
+        "method": "btck_block_header_get_nonce",
+        "params": {
+          "header": {
+            "ref": "$header"
+          }
+        }
+      },
+      "expected_response": {
+        "result": 2083236893
+      }
+    },
+    {
+      "description": "Copies the parsed genesis block header",
+      "request": {
+        "id": "block_header#13",
+        "method": "btck_block_header_copy",
+        "params": {
+          "header": {
+            "ref": "$header"
+          }
+        },
+        "ref": "$header_copy"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$header_copy"
+        }
+      }
+    },
+    {
+      "description": "Destroys the original header after the copy has been created",
+      "request": {
+        "id": "block_header#14",
+        "method": "btck_block_header_destroy",
+        "params": {
+          "header": {
+            "ref": "$header"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Gets the hash from the copied header after the original header is destroyed",
+      "request": {
+        "id": "block_header#15",
+        "method": "btck_block_header_get_hash",
+        "params": {
+          "header": {
+            "ref": "$header_copy"
+          }
+        },
+        "ref": "$header_copy_hash"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$header_copy_hash"
+        }
+      }
+    },
+    {
+      "description": "Destroys the copied header after deriving its hash",
+      "request": {
+        "id": "block_header#16",
+        "method": "btck_block_header_destroy",
+        "params": {
+          "header": {
+            "ref": "$header_copy"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Verifies the copied header hash equals the original header hash",
+      "request": {
+        "id": "block_header#17",
+        "method": "btck_block_hash_equals",
+        "params": {
+          "hash1": {
+            "ref": "$header_hash"
+          },
+          "hash2": {
+            "ref": "$header_copy_hash"
+          }
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroys the original header hash after comparison",
+      "request": {
+        "id": "block_header#18",
+        "method": "btck_block_hash_destroy",
+        "params": {
+          "block_hash": {
+            "ref": "$header_hash"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Destroys the hash returned for the copied header",
+      "request": {
+        "id": "block_header#19",
+        "method": "btck_block_hash_destroy",
+        "params": {
+          "block_hash": {
+            "ref": "$header_copy_hash"
+          }
+        }
+      },
+      "expected_response": {}
+    }
+  ]
+}

@@ -175,9 +175,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy native P2WPKH transaction",
@@ -190,9 +188,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy native P2WPKH script pubkey",
@@ -205,9 +201,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     }
   ]
 }

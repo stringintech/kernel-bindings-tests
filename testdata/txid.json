@@ -1,0 +1,201 @@
+{
+  "title": "Txid Operations",
+  "description": "Covers txid objects returned from transactions, byte serialization, equality checks, copying, and cleanup",
+  "stateful": true,
+  "tests": [
+    {
+      "description": "Creates the first transaction from raw bytes",
+      "request": {
+        "id": "txid#1",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000"
+        },
+        "ref": "$tx1"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx1"
+        }
+      }
+    },
+    {
+      "description": "Gets the txid from the first transaction",
+      "request": {
+        "id": "txid#2",
+        "method": "btck_transaction_get_txid",
+        "params": {
+          "transaction": {
+            "ref": "$tx1"
+          }
+        },
+        "ref": "$txid1"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$txid1"
+        }
+      }
+    },
+    {
+      "description": "Verifies txid serialization round-trips to the original bytes",
+      "request": {
+        "id": "txid#3",
+        "method": "btck_txid_to_bytes",
+        "params": {
+          "txid": {
+            "ref": "$txid1"
+          }
+        }
+      },
+      "expected_response": {
+        "result": "3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a"
+      }
+    },
+    {
+      "description": "Verifies a txid equals itself",
+      "request": {
+        "id": "txid#4",
+        "method": "btck_txid_equals",
+        "params": {
+          "txid1": {
+            "ref": "$txid1"
+          },
+          "txid2": {
+            "ref": "$txid1"
+          }
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Creates a second transaction for txid comparison",
+      "request": {
+        "id": "txid#5",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "02000000000102761402258bf42275f52db288dbbc8fdfe30b35dea86c5425a57feef1a4008b0b0100000000ffffffff3847ba0ccc4e1b63ed2f3b4a677bd247940f4d5669cc91d9a4eb096e7615badc0000000000ffffffff0291ad070000000000225120059715a12766bbbee8529b53dce51fe708e9895f50c6babec988c7917ff5958464d11a0000000000225120bee1246f13735551e5e5c2b5631014501a6c77f8ee2d16d33dc109096f22b2a40140ac4e4af854be645890275c8144869343752d5ceee9b361cfab3de0726c10a449cc7491a295417f7c457961fdde59bde483330364b42fddddeef65cd1d97150fc0440b78c0a5065343d451a93dcb499edd3d8994697932322be5e27fa218f5a99be8484a8ef802c3054dee442baced3c170b8afe18ec9758c860876fe4f06a5e3ccb240984299fc968b71d999354af2e991e089908adec84e1b1f04da8149aa0ffce28311b363dfd2dfc456de77746919c263e95a14952080f433ddb87b13b884812bda4420b5095be39b9f2f96a77235854af7635dd09d0324569e9b3d587fe5fb7c44720cad202b74c2011af089c849383ee527c72325de52df6a788428b68d49e9174053aabaac41c150929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0675a94484b3d55d76af4a2275d327a47c1ec5c7d2232596a09fc883d40bb237e00000000"
+        },
+        "ref": "$tx2"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx2"
+        }
+      }
+    },
+    {
+      "description": "Gets the txid from the second transaction",
+      "request": {
+        "id": "txid#6",
+        "method": "btck_transaction_get_txid",
+        "params": {
+          "transaction": {
+            "ref": "$tx2"
+          }
+        },
+        "ref": "$txid2"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$txid2"
+        }
+      }
+    },
+    {
+      "description": "Verifies different txids are not equal",
+      "request": {
+        "id": "txid#7",
+        "method": "btck_txid_equals",
+        "params": {
+          "txid1": {
+            "ref": "$txid1"
+          },
+          "txid2": {
+            "ref": "$txid2"
+          }
+        }
+      },
+      "expected_response": {
+        "result": false
+      }
+    },
+    {
+      "description": "Destroys the second transaction",
+      "request": {
+        "id": "txid#8",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx2"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Copies the first txid",
+      "request": {
+        "id": "txid#9",
+        "method": "btck_txid_copy",
+        "params": {
+          "txid": {
+            "ref": "$txid1"
+          }
+        },
+        "ref": "$txid1_copy"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$txid1_copy"
+        }
+      }
+    },
+    {
+      "description": "Verifies the copied txid equals the original",
+      "request": {
+        "id": "txid#10",
+        "method": "btck_txid_equals",
+        "params": {
+          "txid1": {
+            "ref": "$txid1_copy"
+          },
+          "txid2": {
+            "ref": "$txid1"
+          }
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroys the copied txid",
+      "request": {
+        "id": "txid#11",
+        "method": "btck_txid_destroy",
+        "params": {
+          "txid": {
+            "ref": "$txid1_copy"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Destroys the first transaction",
+      "request": {
+        "id": "txid#12",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx1"
+          }
+        }
+      },
+      "expected_response": {}
+    }
+  ]
+}

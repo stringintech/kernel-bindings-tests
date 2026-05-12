@@ -121,9 +121,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy valid P2PKH transaction",
@@ -136,9 +134,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Create P2PKH transaction with corrupted signature (one byte flipped)",
@@ -211,9 +207,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy corrupted sig P2PKH transaction",
@@ -226,9 +220,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Create P2PKH transaction with non-DER signature (length byte 0x46 instead of 0x45)",
@@ -327,9 +319,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy non-DER sig P2PKH transaction",
@@ -342,9 +332,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy P2PKH script pubkey",
@@ -357,9 +345,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     }
   ]
 }

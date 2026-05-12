@@ -101,6 +101,50 @@ Many operations return objects (contexts, blocks, chains, etc.) that must persis
 
 The conformance tests are organized into suites, each testing a specific aspect of the Bitcoin Kernel bindings. Test files are located in [`../testdata/`](../testdata/).
 
+### Operations on Primitive Types
+
+Test suites covering primitive kernel objects, their serialization, and related value objects.
+
+#### Txid Operations
+**File:** [`txid.json`](../testdata/txid.json)
+
+Creates txid objects from parsed transactions, verifies byte serialization and equality, and checks copy and destroy behavior.
+
+#### Block Hash Operations
+**File:** [`block_hash.json`](../testdata/block_hash.json)
+
+Creates block hash objects from raw 32-byte values, verifies byte serialization and equality, and checks copy and destroy behavior.
+
+#### Script Pubkey Operations
+**File:** [`script_pubkey.json`](../testdata/script_pubkey.json)
+
+Creates script pubkey objects from raw script bytes, verifies round-trip serialization including empty scripts, and checks copy and destroy behavior.
+
+#### Transaction Operations
+**File:** [`transaction.json`](../testdata/transaction.json)
+
+Parses raw transactions, rejects malformed inputs, verifies txid and serialization getters, checks input and output counts plus indexed accessors, and exercises copy and destroy behavior.
+
+#### Transaction Input Operations
+**File:** [`transaction_input.json`](../testdata/transaction_input.json)
+
+Extracts transaction input objects from a parsed transaction, reads each input's outpoint index and txid, and checks copy and destroy behavior for both input and outpoint objects.
+
+#### Transaction Output Operations
+**File:** [`transaction_output.json`](../testdata/transaction_output.json)
+
+Builds transaction output objects from a script pubkey and amount, verifies amount and script getter behavior, and checks copy and destroy behavior.
+
+#### Block Header Operations
+**File:** [`block_header.json`](../testdata/block_header.json)
+
+Parses raw block headers, rejects short inputs, verifies serialization, field getters, and exercises copy and destroy behavior.
+
+#### Block Operations
+**File:** [`block.json`](../testdata/block.json)
+
+Parses full blocks, rejects malformed inputs, verifies block hash and byte serialization, checks header and transaction accessors, and exercises copy and destroy behavior using the mainnet genesis block.
+
 ### Script Verification Success Cases
 
 Test cases where the script verification operation executes successfully and returns a boolean result (true for valid scripts, false for invalid scripts).

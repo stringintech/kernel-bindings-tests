@@ -148,9 +148,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy valid P2TR key-path transaction",
@@ -163,9 +161,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Create P2TR key-path transaction with corrupted Schnorr signature (one byte flipped)",
@@ -272,9 +268,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy corrupted sig P2TR key-path transaction",
@@ -287,9 +281,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy spent output",
@@ -302,9 +294,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy P2TR script pubkey",
@@ -317,9 +307,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     }
   ]
 }

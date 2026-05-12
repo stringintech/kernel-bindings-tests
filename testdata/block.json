@@ -1,0 +1,352 @@
+{
+  "title": "Block Operations",
+  "description": "Covers block parsing, invalid-input rejection, hash and serialization getters, header access, transaction access by index, copy equality, and object cleanup using the mainnet genesis block",
+  "stateful": true,
+  "tests": [
+    {
+      "description": "Rejects empty raw block bytes",
+      "request": {
+        "id": "block#1",
+        "method": "btck_block_create",
+        "params": {
+          "raw_block": ""
+        },
+        "ref": "$empty_block"
+      },
+      "expected_response": {
+        "error": {}
+      }
+    },
+    {
+      "description": "Rejects incomplete genesis block bytes containing only the header",
+      "request": {
+        "id": "block#2",
+        "method": "btck_block_create",
+        "params": {
+          "raw_block": "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c"
+        },
+        "ref": "$invalid_block"
+      },
+      "expected_response": {
+        "error": {}
+      }
+    },
+    {
+      "description": "Creates a block from the full mainnet genesis block bytes",
+      "request": {
+        "id": "block#3",
+        "method": "btck_block_create",
+        "params": {
+          "raw_block": "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c0101000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000"
+        },
+        "ref": "$block"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$block"
+        }
+      }
+    },
+    {
+      "description": "Gets the block hash",
+      "request": {
+        "id": "block#4",
+        "method": "btck_block_get_hash",
+        "params": {
+          "block": {
+            "ref": "$block"
+          }
+        },
+        "ref": "$block_hash"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$block_hash"
+        }
+      }
+    },
+    {
+      "description": "Verifies the serialized block hash",
+      "request": {
+        "id": "block#5",
+        "method": "btck_block_hash_to_bytes",
+        "params": {
+          "block_hash": {
+            "ref": "$block_hash"
+          }
+        }
+      },
+      "expected_response": {
+        "result": "6fe28c0ab6f1b372c1a6a246ae63f74f931e8365e15a089c68d6190000000000"
+      }
+    },
+    {
+      "description": "Verifies block has one transaction",
+      "request": {
+        "id": "block#6",
+        "method": "btck_block_count_transactions",
+        "params": {
+          "block": {
+            "ref": "$block"
+          }
+        }
+      },
+      "expected_response": {
+        "result": 1
+      }
+    },
+    {
+      "description": "Verifies block serialization round-trips to the original bytes",
+      "request": {
+        "id": "block#7",
+        "method": "btck_block_to_bytes",
+        "params": {
+          "block": {
+            "ref": "$block"
+          }
+        }
+      },
+      "expected_response": {
+        "result": "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a29ab5f49ffff001d1dac2b7c0101000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000"
+      }
+    },
+    {
+      "description": "Copies the block",
+      "request": {
+        "id": "block#8",
+        "method": "btck_block_copy",
+        "params": {
+          "block": {
+            "ref": "$block"
+          }
+        },
+        "ref": "$block_copy"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$block_copy"
+        }
+      }
+    },
+    {
+      "description": "Gets the hash of the copied block",
+      "request": {
+        "id": "block#9",
+        "method": "btck_block_get_hash",
+        "params": {
+          "block": {
+            "ref": "$block_copy"
+          }
+        },
+        "ref": "$block_copy_hash"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$block_copy_hash"
+        }
+      }
+    },
+    {
+      "description": "Destroys the copied block",
+      "request": {
+        "id": "block#10",
+        "method": "btck_block_destroy",
+        "params": {
+          "block": {
+            "ref": "$block_copy"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Verifies the hash of the copied block equals the original block hash",
+      "request": {
+        "id": "block#11",
+        "method": "btck_block_hash_equals",
+        "params": {
+          "hash1": {
+            "ref": "$block_hash"
+          },
+          "hash2": {
+            "ref": "$block_copy_hash"
+          }
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroys the hash returned for the copied block",
+      "request": {
+        "id": "block#12",
+        "method": "btck_block_hash_destroy",
+        "params": {
+          "block_hash": {
+            "ref": "$block_copy_hash"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Extracts the block header",
+      "request": {
+        "id": "block#13",
+        "method": "btck_block_get_header",
+        "params": {
+          "block": {
+            "ref": "$block"
+          }
+        },
+        "ref": "$header"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$header"
+        }
+      }
+    },
+    {
+      "description": "Gets the header hash",
+      "request": {
+        "id": "block#14",
+        "method": "btck_block_header_get_hash",
+        "params": {
+          "header": {
+            "ref": "$header"
+          }
+        },
+        "ref": "$header_hash"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$header_hash"
+        }
+      }
+    },
+    {
+      "description": "Destroys the header after deriving its hash",
+      "request": {
+        "id": "block#15",
+        "method": "btck_block_header_destroy",
+        "params": {
+          "header": {
+            "ref": "$header"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Verifies the header hash equals the block hash",
+      "request": {
+        "id": "block#16",
+        "method": "btck_block_hash_equals",
+        "params": {
+          "hash1": {
+            "ref": "$header_hash"
+          },
+          "hash2": {
+            "ref": "$block_hash"
+          }
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroys the original block hash",
+      "request": {
+        "id": "block#17",
+        "method": "btck_block_hash_destroy",
+        "params": {
+          "block_hash": {
+            "ref": "$block_hash"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Destroys the hash returned for the header",
+      "request": {
+        "id": "block#18",
+        "method": "btck_block_hash_destroy",
+        "params": {
+          "block_hash": {
+            "ref": "$header_hash"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Gets the first transaction from the block by index",
+      "request": {
+        "id": "block#19",
+        "method": "btck_block_get_transaction_at",
+        "params": {
+          "block": {
+            "ref": "$block"
+          },
+          "transaction_index": 0
+        },
+        "ref": "$tx"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx"
+        }
+      }
+    },
+    {
+      "description": "Gets the txid from the transaction returned by index",
+      "request": {
+        "id": "block#20",
+        "method": "btck_transaction_get_txid",
+        "params": {
+          "transaction": {
+            "ref": "$tx"
+          }
+        },
+        "ref": "$txid"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$txid"
+        }
+      }
+    },
+    {
+      "description": "Verifies the serialized txid",
+      "request": {
+        "id": "block#21",
+        "method": "btck_txid_to_bytes",
+        "params": {
+          "txid": {
+            "ref": "$txid"
+          }
+        }
+      },
+      "expected_response": {
+        "result": "3ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a"
+      }
+    },
+    {
+      "description": "Destroys the original block",
+      "request": {
+        "id": "block#22",
+        "method": "btck_block_destroy",
+        "params": {
+          "block": {
+            "ref": "$block"
+          }
+        }
+      },
+      "expected_response": {}
+    }
+  ]
+}
