@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Creates a block header object from raw serialized header data",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "btck_block_header_create"
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "raw_block_header": {
+              "type": "string",
+              "description": "Hex-encoded raw block header data. At least 80 bytes are required; if additional bytes are provided, only the first 80 bytes are used to create the header."
+            }
+          },
+          "required": [
+            "raw_block_header"
+          ]
+        },
+        "ref": {
+          "$ref": "./shared.json#/$defs/RefString"
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./btck_block_header_create.response.json"
+    }
+  }
+}

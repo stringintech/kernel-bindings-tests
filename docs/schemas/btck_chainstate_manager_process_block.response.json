@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "result"
+      ],
+      "properties": {
+        "result": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "new_block"
+          ],
+          "properties": {
+            "new_block": {
+              "type": "boolean"
+            }
+          }
+        },
+        "error": {
+          "type": "null"
+        }
+      },
+      "description": "Object containing:\n- `new_block` (boolean): `true` if this block was not processed before, `false` otherwise"
+    },
+    {
+      "$ref": "./shared.json#/$defs/GenericErrorResponse"
+    }
+  ]
+}

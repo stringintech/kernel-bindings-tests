@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Checks if two txids are equal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "btck_txid_equals"
+        },
+        "params": {
+          "type": "object",
+          "x-doc-order": [
+            "txid1",
+            "txid2"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "txid1": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "First txid reference"
+            },
+            "txid2": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Second txid reference"
+            }
+          },
+          "required": [
+            "txid1",
+            "txid2"
+          ]
+        },
+        "ref": {
+          "$ref": "./shared.json#/$defs/RefString"
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./btck_txid_equals.response.json"
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Creates a block hash object from raw 32-byte block hash data",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "btck_block_hash_create"
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "block_hash": {
+              "$ref": "./shared.json#/$defs/HexString",
+              "description": "Hex-encoded raw 32-byte block hash data"
+            }
+          },
+          "required": [
+            "block_hash"
+          ]
+        },
+        "ref": {
+          "$ref": "./shared.json#/$defs/RefString"
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./btck_block_hash_create.response.json"
+    }
+  }
+}

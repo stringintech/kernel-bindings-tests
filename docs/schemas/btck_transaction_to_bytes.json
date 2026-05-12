@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Returns the consensus-serialized transaction as a hex string",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "btck_transaction_to_bytes"
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "transaction": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Transaction reference"
+            }
+          },
+          "required": [
+            "transaction"
+          ]
+        },
+        "ref": {
+          "$ref": "./shared.json#/$defs/RefString"
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./btck_transaction_to_bytes.response.json"
+    }
+  }
+}

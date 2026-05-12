@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Processes a block through validation checks, disk storage, and UTXO set validation; successful processing does not indicate block validity",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "btck_chainstate_manager_process_block"
+        },
+        "params": {
+          "type": "object",
+          "x-doc-order": [
+            "chainstate_manager",
+            "block"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "chainstate_manager",
+            "block"
+          ],
+          "properties": {
+            "chainstate_manager": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Chainstate manager reference"
+            },
+            "block": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Block reference"
+            }
+          }
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./btck_chainstate_manager_process_block.response.json"
+    }
+  }
+}
