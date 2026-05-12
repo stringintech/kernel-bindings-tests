@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Checks whether a block tree entry is part of the active chain",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "btck_chain_contains"
+        },
+        "params": {
+          "type": "object",
+          "x-doc-order": [
+            "chain",
+            "block_tree_entry"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "chain",
+            "block_tree_entry"
+          ],
+          "properties": {
+            "chain": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Chain reference"
+            },
+            "block_tree_entry": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Block tree entry reference to check"
+            }
+          }
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./btck_chain_contains.response.json"
+    }
+  }
+}

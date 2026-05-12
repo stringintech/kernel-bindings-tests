@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "./shared.json#/$defs/RefResponse",
+  "description": "Contains the returned script pubkey (e.g., `{\"ref\": \"$script_pubkey\"}`). The returned script pubkey reference is a view that depends on the lifetime of the parent transaction output and does not require an explicit destroy call."
+}

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Creates a context with specified chain parameters",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params",
+        "ref"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "btck_context_create"
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "chain_parameters"
+          ],
+          "properties": {
+            "chain_parameters": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "chain_type"
+              ],
+              "properties": {
+                "chain_type": {
+                  "enum": [
+                    "btck_ChainType_MAINNET",
+                    "btck_ChainType_TESTNET",
+                    "btck_ChainType_TESTNET_4",
+                    "btck_ChainType_SIGNET",
+                    "btck_ChainType_REGTEST"
+                  ],
+                  "description": "Chain type"
+                }
+              }
+            }
+          }
+        },
+        "ref": {
+          "$ref": "./shared.json#/$defs/RefString"
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./btck_context_create.response.json"
+    }
+  }
+}

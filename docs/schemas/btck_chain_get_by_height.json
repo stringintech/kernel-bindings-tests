@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Retrieves a block tree entry at a specific height in the chain",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params",
+        "ref"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "btck_chain_get_by_height"
+        },
+        "params": {
+          "type": "object",
+          "x-doc-order": [
+            "chain",
+            "block_height"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "chain",
+            "block_height"
+          ],
+          "properties": {
+            "chain": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Chain reference"
+            },
+            "block_height": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Height to query"
+            }
+          }
+        },
+        "ref": {
+          "$ref": "./shared.json#/$defs/RefString"
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./btck_chain_get_by_height.response.json"
+    }
+  }
+}
