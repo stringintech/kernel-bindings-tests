@@ -1,5 +1,5 @@
 {
-  "name": "Chain",
+  "title": "Chain Operations",
   "description": "Sets up blocks, checks chain state, and verifies that the chain tip changes as expected after a reorg scenario",
   "stateful": true,
   "tests": [

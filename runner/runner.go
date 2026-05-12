@@ -120,8 +120,9 @@ func (tr *TestRunner) RunTestSuite(ctx context.Context, suite TestSuite, verbosi
 	depTracker := NewDependencyTracker()
 
 	result := TestResult{
-		SuiteName:  suite.Name,
-		TotalTests: len(suite.Tests),
+		SuiteTitle:    suite.Title,
+		SuiteFileName: suite.FileName,
+		TotalTests:    len(suite.Tests),
 	}
 
 	skipTests := false
@@ -330,11 +331,12 @@ func validateResponseForSuccess(test *TestCase, resp *Response) error {
 
 // TestResult contains results from running a test suite
 type TestResult struct {
-	SuiteName   string
-	TotalTests  int
-	PassedTests int
-	FailedTests int
-	TestResults []SingleTestResult
+	SuiteTitle    string
+	SuiteFileName string
+	TotalTests    int
+	PassedTests   int
+	FailedTests   int
+	TestResults   []SingleTestResult
 }
 
 // SingleTestResult contains the result of a single test
@@ -357,10 +359,7 @@ func LoadTestSuiteFromFS(fsys embed.FS, filePath string) (*TestSuite, error) {
 		return nil, fmt.Errorf("failed to parse JSON: %w", err)
 	}
 
-	// Set suite name from filename if not specified
-	if suite.Name == "" {
-		suite.Name = filepath.Base(filePath)
-	}
+	suite.FileName = filepath.Base(filePath)
 
 	return &suite, nil
 }

@@ -1,5 +1,5 @@
 {
-  "name": "script_verify_p2sh_p2wpkh",
+  "title": "Script Verification - P2SH-P2WPKH",
   "description": "Verifies a mainnet P2SH-P2WPKH output against two variants: valid witness sig (passes with P2SH + WITNESS and all pre-taproot flags), corrupted witness sig (fails with WITNESS enforced, passes with P2SH only). Mainnet tx 07dea5918a500d7476b1d116d80507a66bc2167681b2e6ca7dd99dbc6d95c31d.",
   "stateful": true,
   "tests": [

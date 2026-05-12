@@ -1,5 +1,5 @@
 {
-  "name": "script_verify_p2wpkh",
+  "title": "Script Verification - P2WPKH",
   "description": "Verifies a mainnet native P2WPKH output with two amount values: correct amount (5003 sat) passes with P2SH + WITNESS and all pre-taproot flags; wrong amount (5002 sat) fails the witness commitment check when WITNESS is enforced, passes with P2SH only. Mainnet tx 00000000102d4e899ec7cc3656d91ab83aa8e95807dabb90fbe16a1a9e70b6ab.",
   "stateful": true,
   "tests": [

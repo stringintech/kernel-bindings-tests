@@ -1,5 +1,5 @@
 {
-  "name": "script_verify_p2pkh",
+  "title": "Script Verification - P2PKH",
   "description": "Verifies a mainnet P2PKH output against three transaction variants: valid sig (passes with no flags and all pre-taproot flags), corrupted sig (always fails), non-DER sig (passes without DERSIG, fails with it). Mainnet tx aca326a724eda9a461c10a876534ecd5ae7b27f10f26c3862fb996f80ea2d45d.",
   "stateful": true,
   "tests": [

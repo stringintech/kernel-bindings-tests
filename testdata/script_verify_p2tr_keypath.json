@@ -1,5 +1,5 @@
 {
-  "name": "script_verify_p2tr_keypath",
+  "title": "Script Verification - P2TR Key-Path",
   "description": "Verifies a mainnet P2TR key-path spend. Requires one spent output for precomputed transaction data. Valid Schnorr sig passes with P2SH + WITNESS + TAPROOT and all flags; corrupted Schnorr sig fails when TAPROOT is enforced, passes with P2SH + WITNESS only. Mainnet tx 33e794d097969002ee05d336686fc03c9e15a597c1b9827669460fac98799036.",
   "stateful": true,
   "tests": [

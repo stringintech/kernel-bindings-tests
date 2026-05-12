@@ -1,5 +1,5 @@
 {
-  "name": "script_verify_csv",
+  "title": "Script Verification - CSV",
   "description": "Verifies a P2SH output with OP_CHECKSEQUENCEVERIFY locked to sequence 10. Transaction with sequence=10 passes with P2SH + CHECKSEQUENCEVERIFY and all pre-taproot flags; transaction with sequence=5 fails when CHECKSEQUENCEVERIFY is enforced but passes with P2SH only.",
   "stateful": true,
   "tests": [

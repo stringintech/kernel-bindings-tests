@@ -68,7 +68,7 @@ func main() {
 	totalTests := 0
 
 	for _, testFile := range testFiles {
-		fmt.Printf("\n=== Running test suite: %s ===\n", testFile)
+		fmt.Printf("\n=== Running test suite ===\n")
 
 		// Load test suite from embedded FS
 		suite, err := runner.LoadTestSuiteFromFS(testdata.FS, testFile)
@@ -106,7 +106,7 @@ func main() {
 }
 
 func printResults(suite *runner.TestSuite, result runner.TestResult) {
-	fmt.Printf("\nTest Suite: %s\n", result.SuiteName)
+	fmt.Printf("\nTest Suite: %s (%s)\n", result.SuiteTitle, result.SuiteFileName)
 	if suite.Description != "" {
 		fmt.Printf("Description: %s\n", suite.Description)
 	}

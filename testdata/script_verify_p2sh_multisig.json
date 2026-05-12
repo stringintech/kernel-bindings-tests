@@ -1,5 +1,5 @@
 {
-  "name": "script_verify_p2sh_multisig",
+  "title": "Script Verification - P2SH Multisig",
   "description": "Verifies a mainnet P2SH 2-of-3 multisig output against three variants: valid sigs (passes with P2SH and all pre-taproot flags), corrupted sig (fails with P2SH, passes without it), non-null dummy element (passes with P2SH only, fails when NULLDUMMY is also set). Mainnet tx 3cd7f78499632d6f672d8a9412ae756b29c41342954c97846e0d153c7753a37e.",
   "stateful": true,
   "tests": [

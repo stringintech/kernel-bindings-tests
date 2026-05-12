@@ -1,5 +1,5 @@
 {
-  "name": "script_verify_p2wsh",
+  "title": "Script Verification - P2WSH",
   "description": "Verifies a mainnet native P2WSH output at input index 1 of a two-input transaction. Valid HTLC-style witness script passes with P2SH + WITNESS and all pre-taproot flags; corrupted witness sig fails with WITNESS enforced, passes with P2SH only. Mainnet tx 12fc05be6778b06e77191e8fb18fee632b2d92efa0b6830e1cf63e28723a8b8f.",
   "stateful": true,
   "tests": [

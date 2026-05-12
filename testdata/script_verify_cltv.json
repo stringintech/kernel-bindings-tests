@@ -1,5 +1,5 @@
 {
-  "name": "script_verify_cltv",
+  "title": "Script Verification - CLTV",
   "description": "Verifies a P2SH output with OP_CHECKLOCKTIMEVERIFY locked to block 100. Transaction with locktime=100 passes with P2SH + CHECKLOCKTIMEVERIFY and all pre-taproot flags; transaction with locktime=50 fails when CHECKLOCKTIMEVERIFY is enforced but passes with P2SH only.",
   "stateful": true,
   "tests": [

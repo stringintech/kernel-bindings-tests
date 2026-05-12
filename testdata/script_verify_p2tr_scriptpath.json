@@ -1,5 +1,5 @@
 {
-  "name": "script_verify_p2tr_scriptpath",
+  "title": "Script Verification - P2TR Script-Path",
   "description": "Verifies a mainnet P2TR script-path spend at input index 1 of a two-input transaction. Requires two spent outputs for precomputed transaction data. Valid script-path witness passes with P2SH + WITNESS + TAPROOT and all flags; corrupted sig fails when TAPROOT is enforced, passes with P2SH + WITNESS only. Mainnet tx 1ba232a8bf936cf24155292c9a4330298278f572bacc78455eb68e3552197c30.",
   "stateful": true,
   "tests": [
