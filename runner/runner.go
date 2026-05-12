@@ -12,6 +12,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/santhosh-tekuri/jsonschema/v6"
 )
 
 // VerbosityLevel represents different levels of test output verbosity
@@ -28,9 +30,10 @@ const (
 
 // TestRunner executes test suites against a handler binary
 type TestRunner struct {
-	handler       *Handler
-	handlerConfig *HandlerConfig
-	timeout       time.Duration
+	handler         *Handler
+	handlerConfig   *HandlerConfig
+	timeout         time.Duration
+	responseSchemas map[string]*jsonschema.Schema
 }
 
 // NewTestRunner creates a new test runner for executing test suites against a handler binary.
@@ -55,13 +58,19 @@ func NewTestRunner(handlerPath string, handlerTimeout time.Duration, timeout tim
 		timeout = 30 * time.Second
 	}
 
+	responseSchemas, err := loadEmbeddedResponseSchemas()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load response schemas: %w", err)
+	}
+
 	return &TestRunner{
 		handler: handler,
 		handlerConfig: &HandlerConfig{
 			Path:    handlerPath,
 			Timeout: handlerTimeout,
 		},
-		timeout: timeout,
+		timeout:         timeout,
+		responseSchemas: responseSchemas,
 	}, nil
 }
 
@@ -87,20 +96,15 @@ func (tr *TestRunner) SendRequest(req Request) error {
 	return nil
 }
 
-// ReadResponse reads and unmarshals a response from the handler
-func (tr *TestRunner) ReadResponse() (*Response, error) {
+// ReadResponseLine reads a raw JSON response line from the handler.
+func (tr *TestRunner) ReadResponseLine() ([]byte, error) {
 	line, err := tr.handler.ReadLine()
 	if err != nil {
 		slog.Warn("Failed to read response, cleaning up handler (will spawn new one for remaining tests)", "error", err)
 		tr.CloseHandler()
 		return nil, err
 	}
-
-	var resp Response
-	if err := json.Unmarshal(line, &resp); err != nil {
-		return nil, err
-	}
-	return &resp, nil
+	return line, nil
 }
 
 // CloseHandler closes the handler and sets it to nil
@@ -202,7 +206,7 @@ func (tr *TestRunner) runTest(ctx context.Context, test *TestCase) SingleTestRes
 		}
 	}
 
-	resp, err := tr.ReadResponse()
+	line, err := tr.ReadResponseLine()
 	if err != nil {
 		return SingleTestResult{
 			TestID:  test.Request.ID,
@@ -211,19 +215,42 @@ func (tr *TestRunner) runTest(ctx context.Context, test *TestCase) SingleTestRes
 		}
 	}
 
-	if err := validateResponse(test, resp); err != nil {
+	schema := tr.responseSchemas[test.Request.Method]
+	if schema == nil {
+		panic(fmt.Sprintf("missing response schema for method %q", test.Request.Method))
+	}
+
+	if err := validateJSONAgainstSchema(schema, line); err != nil {
+		return SingleTestResult{
+			TestID:  test.Request.ID,
+			Passed:  false,
+			Message: fmt.Sprintf("Invalid response: schema validation failed for method %s: %v", test.Request.Method, err),
+		}
+	}
+
+	var resp Response
+	err = json.Unmarshal(line, &resp)
+	if err != nil {
+		return SingleTestResult{
+			TestID:  test.Request.ID,
+			Passed:  false,
+			Message: fmt.Sprintf("Invalid response JSON: %v", err),
+		}
+	}
+
+	if err := validateResponse(test, &resp); err != nil {
 		return SingleTestResult{
 			TestID:           test.Request.ID,
 			Passed:           false,
 			Message:          fmt.Sprintf("Invalid response: %s", err.Error()),
-			ReceivedResponse: resp,
+			ReceivedResponse: &resp,
 		}
 	}
 
 	return SingleTestResult{
 		TestID:           test.Request.ID,
 		Passed:           true,
-		ReceivedResponse: resp,
+		ReceivedResponse: &resp,
 	}
 }
 
