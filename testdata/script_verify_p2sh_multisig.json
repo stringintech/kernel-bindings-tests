@@ -121,9 +121,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy valid P2SH multisig transaction",
@@ -136,9 +134,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Create P2SH multisig transaction with corrupted signature (length byte 0x31 instead of 0x30)",
@@ -237,9 +233,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy corrupted sig P2SH multisig transaction",
@@ -252,9 +246,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Create P2SH multisig transaction with non-null dummy stack element (OP_1 instead of OP_0)",
@@ -354,9 +346,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy non-null dummy P2SH multisig transaction",
@@ -369,9 +359,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy P2SH multisig script pubkey",
@@ -384,9 +372,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     }
   ]
 }

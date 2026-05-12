@@ -1,0 +1,141 @@
+{
+  "title": "Script Pubkey Operations",
+  "description": "Covers script pubkey object creation from raw bytes, byte serialization, copying, and cleanup",
+  "stateful": true,
+  "tests": [
+    {
+      "description": "Creates a script pubkey from raw bytes",
+      "request": {
+        "id": "script_pubkey#1",
+        "method": "btck_script_pubkey_create",
+        "params": {
+          "script_pubkey": "4104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac"
+        },
+        "ref": "$spk"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$spk"
+        }
+      }
+    },
+    {
+      "description": "Verifies script pubkey serialization round-trips to the original bytes",
+      "request": {
+        "id": "script_pubkey#2",
+        "method": "btck_script_pubkey_to_bytes",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          }
+        }
+      },
+      "expected_response": {
+        "result": "4104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac"
+      }
+    },
+    {
+      "description": "Copies the script pubkey",
+      "request": {
+        "id": "script_pubkey#3",
+        "method": "btck_script_pubkey_copy",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          }
+        },
+        "ref": "$spk_copy"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$spk_copy"
+        }
+      }
+    },
+    {
+      "description": "Destroys the original script pubkey",
+      "request": {
+        "id": "script_pubkey#4",
+        "method": "btck_script_pubkey_destroy",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Verifies the copied script pubkey serializes to the original bytes",
+      "request": {
+        "id": "script_pubkey#5",
+        "method": "btck_script_pubkey_to_bytes",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk_copy"
+          }
+        }
+      },
+      "expected_response": {
+        "result": "4104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac"
+      }
+    },
+    {
+      "description": "Destroys the copied script pubkey",
+      "request": {
+        "id": "script_pubkey#6",
+        "method": "btck_script_pubkey_destroy",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk_copy"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Creates an empty script pubkey from raw bytes",
+      "request": {
+        "id": "script_pubkey#7",
+        "method": "btck_script_pubkey_create",
+        "params": {
+          "script_pubkey": ""
+        },
+        "ref": "$empty_spk"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$empty_spk"
+        }
+      }
+    },
+    {
+      "description": "Verifies empty script pubkey serialization returns empty bytes",
+      "request": {
+        "id": "script_pubkey#8",
+        "method": "btck_script_pubkey_to_bytes",
+        "params": {
+          "script_pubkey": {
+            "ref": "$empty_spk"
+          }
+        }
+      },
+      "expected_response": {
+        "result": ""
+      }
+    },
+    {
+      "description": "Destroys the empty script pubkey",
+      "request": {
+        "id": "script_pubkey#9",
+        "method": "btck_script_pubkey_destroy",
+        "params": {
+          "script_pubkey": {
+            "ref": "$empty_spk"
+          }
+        }
+      },
+      "expected_response": {}
+    }
+  ]
+}

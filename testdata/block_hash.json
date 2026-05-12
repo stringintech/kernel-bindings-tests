@@ -1,0 +1,165 @@
+{
+  "title": "Block Hash Operations",
+  "description": "Covers block hash object creation from valid and invalid bytes, byte serialization, equality checks, copying, and cleanup",
+  "stateful": true,
+  "tests": [
+    {
+      "description": "Creates a block hash from 32 raw bytes",
+      "request": {
+        "id": "block_hash#1",
+        "method": "btck_block_hash_create",
+        "params": {
+          "block_hash": "6fe28c0ab6f1b372c1a6a246ae63f74f931e8365e15a089c68d6190000000000"
+        },
+        "ref": "$hash1"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$hash1"
+        }
+      }
+    },
+    {
+      "description": "Verifies block hash serialization round-trips to the original bytes",
+      "request": {
+        "id": "block_hash#2",
+        "method": "btck_block_hash_to_bytes",
+        "params": {
+          "block_hash": {
+            "ref": "$hash1"
+          }
+        }
+      },
+      "expected_response": {
+        "result": "6fe28c0ab6f1b372c1a6a246ae63f74f931e8365e15a089c68d6190000000000"
+      }
+    },
+    {
+      "description": "Verifies a block hash equals itself",
+      "request": {
+        "id": "block_hash#3",
+        "method": "btck_block_hash_equals",
+        "params": {
+          "hash1": {
+            "ref": "$hash1"
+          },
+          "hash2": {
+            "ref": "$hash1"
+          }
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Creates a block hash from all-zero bytes",
+      "request": {
+        "id": "block_hash#4",
+        "method": "btck_block_hash_create",
+        "params": {
+          "block_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "ref": "$hash2"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$hash2"
+        }
+      }
+    },
+    {
+      "description": "Verifies different block hashes are not equal",
+      "request": {
+        "id": "block_hash#5",
+        "method": "btck_block_hash_equals",
+        "params": {
+          "hash1": {
+            "ref": "$hash1"
+          },
+          "hash2": {
+            "ref": "$hash2"
+          }
+        }
+      },
+      "expected_response": {
+        "result": false
+      }
+    },
+    {
+      "description": "Destroys the all-zero block hash",
+      "request": {
+        "id": "block_hash#6",
+        "method": "btck_block_hash_destroy",
+        "params": {
+          "block_hash": {
+            "ref": "$hash2"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Copies the first block hash",
+      "request": {
+        "id": "block_hash#7",
+        "method": "btck_block_hash_copy",
+        "params": {
+          "block_hash": {
+            "ref": "$hash1"
+          }
+        },
+        "ref": "$hash1_copy"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$hash1_copy"
+        }
+      }
+    },
+    {
+      "description": "Verifies the copied block hash equals the original",
+      "request": {
+        "id": "block_hash#8",
+        "method": "btck_block_hash_equals",
+        "params": {
+          "hash1": {
+            "ref": "$hash1_copy"
+          },
+          "hash2": {
+            "ref": "$hash1"
+          }
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroys the copied block hash",
+      "request": {
+        "id": "block_hash#9",
+        "method": "btck_block_hash_destroy",
+        "params": {
+          "block_hash": {
+            "ref": "$hash1_copy"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Destroys the original block hash",
+      "request": {
+        "id": "block_hash#10",
+        "method": "btck_block_hash_destroy",
+        "params": {
+          "block_hash": {
+            "ref": "$hash1"
+          }
+        }
+      },
+      "expected_response": {}
+    }
+  ]
+}
