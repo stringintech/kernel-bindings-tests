@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "./shared.json#/$defs/RefResponse",
+  "description": "Contains the returned block header (e.g., `{\"ref\": \"$header\"}`). The returned block header reference depends on the lifetime of the parent block and does not require an explicit destroy call."
+}

@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "./shared.json#/$defs/RefResponse",
+  "description": "Contains the copied transaction output (e.g., `{\"ref\": \"$transaction_output_copy\"}`)"
+}

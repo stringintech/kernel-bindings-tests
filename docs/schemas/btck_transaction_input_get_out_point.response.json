@@ -1,0 +1,5 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "./shared.json#/$defs/RefResponse",
+  "description": "Contains the returned transaction out point (e.g., `{\"ref\": \"$transaction_out_point\"}`). The returned transaction out point reference is a view that depends on the lifetime of the parent transaction input and does not require an explicit destroy call."
+}

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Creates a transaction output from a script pubkey reference and amount",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params",
+        "ref"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "btck_transaction_output_create"
+        },
+        "params": {
+          "type": "object",
+          "x-doc-order": [
+            "script_pubkey",
+            "amount"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "script_pubkey",
+            "amount"
+          ],
+          "properties": {
+            "script_pubkey": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Reference to a ScriptPubkey from `btck_script_pubkey_create`"
+            },
+            "amount": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Amount in satoshis"
+            }
+          }
+        },
+        "ref": {
+          "$ref": "./shared.json#/$defs/RefString"
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./btck_transaction_output_create.response.json"
+    }
+  }
+}

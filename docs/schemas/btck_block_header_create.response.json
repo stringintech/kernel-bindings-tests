@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$ref": "./shared.json#/$defs/RefResponse",
+      "description": "Contains the created block header (e.g., `{\"ref\": \"$header\"}`)"
+    },
+    {
+      "$ref": "./shared.json#/$defs/GenericErrorResponse",
+      "description": "`{}` if fewer than 80 bytes are provided for the serialized block header"
+    }
+  ]
+}

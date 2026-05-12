@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Destroys precomputed transaction data and frees associated resources",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "btck_precomputed_transaction_data_destroy"
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "precomputed_txdata"
+          ],
+          "properties": {
+            "precomputed_txdata": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Precomputed transaction data reference to destroy"
+            }
+          }
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./btck_precomputed_transaction_data_destroy.response.json"
+    }
+  }
+}

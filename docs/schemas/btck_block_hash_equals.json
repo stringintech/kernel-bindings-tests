@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Checks if two block hashes are equal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "btck_block_hash_equals"
+        },
+        "params": {
+          "type": "object",
+          "x-doc-order": [
+            "hash1",
+            "hash2"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "hash1": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "First block hash reference"
+            },
+            "hash2": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Second block hash reference"
+            }
+          },
+          "required": [
+            "hash1",
+            "hash2"
+          ]
+        },
+        "ref": {
+          "$ref": "./shared.json#/$defs/RefString"
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./btck_block_hash_equals.response.json"
+    }
+  }
+}

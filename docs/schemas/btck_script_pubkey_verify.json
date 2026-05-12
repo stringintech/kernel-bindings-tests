@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Verifies a script pubkey against spending conditions",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "btck_script_pubkey_verify"
+        },
+        "params": {
+          "type": "object",
+          "x-doc-order": [
+            "script_pubkey",
+            "amount",
+            "tx_to",
+            "precomputed_txdata",
+            "input_index",
+            "flags"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "script_pubkey",
+            "amount",
+            "tx_to",
+            "input_index",
+            "flags"
+          ],
+          "properties": {
+            "script_pubkey": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Reference to a ScriptPubkey from `btck_script_pubkey_create`"
+            },
+            "amount": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Amount of the script pubkey's associated output. May be zero if the witness flag is not set"
+            },
+            "tx_to": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Reference to a Transaction from `btck_transaction_create`"
+            },
+            "precomputed_txdata": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Reference to PrecomputedTransactionData from `btck_precomputed_transaction_data_create`. Required when the taproot flag is set"
+            },
+            "input_index": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Index of the input in tx_to spending the script_pubkey"
+            },
+            "flags": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "enum": [
+                  "btck_ScriptVerificationFlags_NONE",
+                  "btck_ScriptVerificationFlags_P2SH",
+                  "btck_ScriptVerificationFlags_DERSIG",
+                  "btck_ScriptVerificationFlags_NULLDUMMY",
+                  "btck_ScriptVerificationFlags_CHECKLOCKTIMEVERIFY",
+                  "btck_ScriptVerificationFlags_CHECKSEQUENCEVERIFY",
+                  "btck_ScriptVerificationFlags_WITNESS",
+                  "btck_ScriptVerificationFlags_TAPROOT"
+                ]
+              },
+              "description": "Script verification flags controlling validation constraints"
+            }
+          }
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./btck_script_pubkey_verify.response.json"
+    }
+  }
+}
