@@ -122,9 +122,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy valid P2WSH transaction",
@@ -137,9 +135,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Create P2WSH transaction with corrupted signature (one byte flipped in second witness)",
@@ -239,9 +235,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy corrupted sig P2WSH transaction",
@@ -254,9 +248,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy native P2WSH script pubkey",
@@ -269,9 +261,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     }
   ]
 }

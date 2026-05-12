@@ -1,0 +1,162 @@
+{
+  "title": "Transaction Output Operations",
+  "description": "Covers transaction output object creation from a script pubkey and amount, amount and script getters, copying, and cleanup",
+  "stateful": true,
+  "tests": [
+    {
+      "description": "Creates a script pubkey from raw bytes",
+      "request": {
+        "id": "transaction_output#1",
+        "method": "btck_script_pubkey_create",
+        "params": {
+          "script_pubkey": "4104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac"
+        },
+        "ref": "$spk"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$spk"
+        }
+      }
+    },
+    {
+      "description": "Creates a transaction output from the script pubkey and amount",
+      "request": {
+        "id": "transaction_output#2",
+        "method": "btck_transaction_output_create",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          },
+          "amount": 5000000000
+        },
+        "ref": "$txout"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$txout"
+        }
+      }
+    },
+    {
+      "description": "Destroys the original script pubkey after output creation",
+      "request": {
+        "id": "transaction_output#3",
+        "method": "btck_script_pubkey_destroy",
+        "params": {
+          "script_pubkey": {
+            "ref": "$spk"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Verifies the transaction output amount",
+      "request": {
+        "id": "transaction_output#4",
+        "method": "btck_transaction_output_get_amount",
+        "params": {
+          "transaction_output": {
+            "ref": "$txout"
+          }
+        }
+      },
+      "expected_response": {
+        "result": 5000000000
+      }
+    },
+    {
+      "description": "Gets the script pubkey from the transaction output",
+      "request": {
+        "id": "transaction_output#5",
+        "method": "btck_transaction_output_get_script_pubkey",
+        "params": {
+          "transaction_output": {
+            "ref": "$txout"
+          }
+        },
+        "ref": "$txout_spk"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$txout_spk"
+        }
+      }
+    },
+    {
+      "description": "Verifies the output script pubkey serializes to the original bytes",
+      "request": {
+        "id": "transaction_output#6",
+        "method": "btck_script_pubkey_to_bytes",
+        "params": {
+          "script_pubkey": {
+            "ref": "$txout_spk"
+          }
+        }
+      },
+      "expected_response": {
+        "result": "4104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac"
+      }
+    },
+    {
+      "description": "Copies the transaction output",
+      "request": {
+        "id": "transaction_output#7",
+        "method": "btck_transaction_output_copy",
+        "params": {
+          "transaction_output": {
+            "ref": "$txout"
+          }
+        },
+        "ref": "$txout_copy"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$txout_copy"
+        }
+      }
+    },
+    {
+      "description": "Destroys the original transaction output after copying",
+      "request": {
+        "id": "transaction_output#8",
+        "method": "btck_transaction_output_destroy",
+        "params": {
+          "transaction_output": {
+            "ref": "$txout"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Verifies the copied transaction output has the same amount",
+      "request": {
+        "id": "transaction_output#9",
+        "method": "btck_transaction_output_get_amount",
+        "params": {
+          "transaction_output": {
+            "ref": "$txout_copy"
+          }
+        }
+      },
+      "expected_response": {
+        "result": 5000000000
+      }
+    },
+    {
+      "description": "Destroys the copied transaction output",
+      "request": {
+        "id": "transaction_output#10",
+        "method": "btck_transaction_output_destroy",
+        "params": {
+          "transaction_output": {
+            "ref": "$txout_copy"
+          }
+        }
+      },
+      "expected_response": {}
+    }
+  ]
+}

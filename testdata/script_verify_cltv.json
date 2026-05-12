@@ -122,9 +122,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy valid locktime CLTV transaction",
@@ -137,9 +135,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Create CLTV transaction with locktime=50 (does not satisfy CLTV condition)",
@@ -239,9 +235,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy invalid locktime CLTV transaction",
@@ -254,9 +248,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy CLTV P2SH script pubkey",
@@ -269,9 +261,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     }
   ]
 }

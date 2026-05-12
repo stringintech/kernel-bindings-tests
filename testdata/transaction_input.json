@@ -1,0 +1,252 @@
+{
+  "title": "Transaction Input Operations",
+  "description": "Covers transaction input object access by index, out point getters, input copying, out point copying, and cleanup",
+  "stateful": true,
+  "tests": [
+    {
+      "description": "Creates a transaction from raw bytes",
+      "request": {
+        "id": "transaction_input#1",
+        "method": "btck_transaction_create",
+        "params": {
+          "raw_transaction": "02000000013f7cebd65c27431a90bba7f796914fe8cc2ddfc3f2cbd6f7e5f2fc854534da95000000006b483045022100de1ac3bcdfb0332207c4a91f3832bd2c2915840165f876ab47c5f8996b971c3602201c6c053d750fadde599e6f5c4e1963df0f01fc0d97815e8157e3d59fe09ca30d012103699b464d1d8bc9e47d4fb1cdaa89a1c5783d68363c4dbc4b524ed3d857148617feffffff02836d3c01000000001976a914fc25d6d5c94003bf5b0c7b640a248e2c637fcfb088ac7ada8202000000001976a914fbed3d9b11183209a57999d54d59f67c019e756c88ac6acb0700"
+        },
+        "ref": "$tx"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$tx"
+        }
+      }
+    },
+    {
+      "description": "Gets the first transaction input by index",
+      "request": {
+        "id": "transaction_input#2",
+        "method": "btck_transaction_get_input_at",
+        "params": {
+          "transaction": {
+            "ref": "$tx"
+          },
+          "input_index": 0
+        },
+        "ref": "$in0"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$in0"
+        }
+      }
+    },
+    {
+      "description": "Gets the out point from the indexed input",
+      "request": {
+        "id": "transaction_input#3",
+        "method": "btck_transaction_input_get_out_point",
+        "params": {
+          "transaction_input": {
+            "ref": "$in0"
+          }
+        },
+        "ref": "$op0"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$op0"
+        }
+      }
+    },
+    {
+      "description": "Verifies the out point index",
+      "request": {
+        "id": "transaction_input#4",
+        "method": "btck_transaction_out_point_get_index",
+        "params": {
+          "transaction_out_point": {
+            "ref": "$op0"
+          }
+        }
+      },
+      "expected_response": {
+        "result": 0
+      }
+    },
+    {
+      "description": "Gets the txid from the out point",
+      "request": {
+        "id": "transaction_input#5",
+        "method": "btck_transaction_out_point_get_txid",
+        "params": {
+          "transaction_out_point": {
+            "ref": "$op0"
+          }
+        },
+        "ref": "$op0_txid"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$op0_txid"
+        }
+      }
+    },
+    {
+      "description": "Verifies the serialized txid from the out point",
+      "request": {
+        "id": "transaction_input#6",
+        "method": "btck_txid_to_bytes",
+        "params": {
+          "txid": {
+            "ref": "$op0_txid"
+          }
+        }
+      },
+      "expected_response": {
+        "result": "3f7cebd65c27431a90bba7f796914fe8cc2ddfc3f2cbd6f7e5f2fc854534da95"
+      }
+    },
+    {
+      "description": "Copies the transaction input",
+      "request": {
+        "id": "transaction_input#7",
+        "method": "btck_transaction_input_copy",
+        "params": {
+          "transaction_input": {
+            "ref": "$in0"
+          }
+        },
+        "ref": "$in0_copy"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$in0_copy"
+        }
+      }
+    },
+    {
+      "description": "Gets the out point from the copied input",
+      "request": {
+        "id": "transaction_input#8",
+        "method": "btck_transaction_input_get_out_point",
+        "params": {
+          "transaction_input": {
+            "ref": "$in0_copy"
+          }
+        },
+        "ref": "$op0_copy"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$op0_copy"
+        }
+      }
+    },
+    {
+      "description": "Verifies the copied input out point has the same index",
+      "request": {
+        "id": "transaction_input#9",
+        "method": "btck_transaction_out_point_get_index",
+        "params": {
+          "transaction_out_point": {
+            "ref": "$op0_copy"
+          }
+        }
+      },
+      "expected_response": {
+        "result": 0
+      }
+    },
+    {
+      "description": "Destroys the copied transaction input",
+      "request": {
+        "id": "transaction_input#10",
+        "method": "btck_transaction_input_destroy",
+        "params": {
+          "transaction_input": {
+            "ref": "$in0_copy"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Copies the original input out point",
+      "request": {
+        "id": "transaction_input#11",
+        "method": "btck_transaction_out_point_copy",
+        "params": {
+          "transaction_out_point": {
+            "ref": "$op0"
+          }
+        },
+        "ref": "$op0_dup"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$op0_dup"
+        }
+      }
+    },
+    {
+      "description": "Gets the txid from the copied out point",
+      "request": {
+        "id": "transaction_input#12",
+        "method": "btck_transaction_out_point_get_txid",
+        "params": {
+          "transaction_out_point": {
+            "ref": "$op0_dup"
+          }
+        },
+        "ref": "$op0_dup_txid"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$op0_dup_txid"
+        }
+      }
+    },
+    {
+      "description": "Verifies the txid from the copied out point equals the original txid",
+      "request": {
+        "id": "transaction_input#13",
+        "method": "btck_txid_equals",
+        "params": {
+          "txid1": {
+            "ref": "$op0_txid"
+          },
+          "txid2": {
+            "ref": "$op0_dup_txid"
+          }
+        }
+      },
+      "expected_response": {
+        "result": true
+      }
+    },
+    {
+      "description": "Destroys the copied out point after comparing txids",
+      "request": {
+        "id": "transaction_input#14",
+        "method": "btck_transaction_out_point_destroy",
+        "params": {
+          "transaction_out_point": {
+            "ref": "$op0_dup"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Destroys the transaction after comparing out point txids",
+      "request": {
+        "id": "transaction_input#15",
+        "method": "btck_transaction_destroy",
+        "params": {
+          "transaction": {
+            "ref": "$tx"
+          }
+        }
+      },
+      "expected_response": {}
+    }
+  ]
+}
