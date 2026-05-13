@@ -30,10 +30,11 @@ The framework ensures that all language bindings (Go, Python, Rust, etc.) behave
 ```
 
 **This repository contains:**
-1. [**Handler Specification**](./docs/handler-spec.md): Defines the protocol, message formats, and test suites that handlers must implement
-2. [**Test Runner**](./cmd/runner/main.go): Spawns handler binary, sends test requests via stdin, validates responses from stdout
-3. [**Test Cases**](./testdata): JSON files defining requests and expected responses
-4. [**Mock Handler**](./cmd/mock-handler/main.go): Validates the runner by echoing expected responses from test cases
+1. [**Specification**](./docs/handler-spec.md): Defines the handler protocol and links to the generated [**Method Reference**](./docs/methods-spec.md) for method parameters, results, and errors
+2. [**Test Suites**](./testdata): JSON files defining requests and expected responses
+3. [**Test Runner**](./cmd/runner/main.go): Runs suites against a handler by sending test requests via stdin, validating responses from stdout, and checking them against the expected results
+4. [**Schemas**](./docs/schemas): Define the suite format and per-method request/response shapes, with tools in [`cmd/suite-validate`](./cmd/suite-validate) and [`cmd/specgen`](./cmd/specgen) for validation and documentation generation
+5. [**Mock Handler**](./cmd/mock-handler/main.go): Validates the runner by echoing expected responses from test cases
 
 ** **Handler binaries** are not hosted in this repository. They must be implemented separately following the [**Handler Specification**](./docs/handler-spec.md) and should:
 - Implement the JSON protocol for communication with the test runner
@@ -44,7 +45,11 @@ The framework ensures that all language bindings (Go, Python, Rust, etc.) behave
 
 ### Testing Your Binding (Custom Handler)
 
-Test your handler implementation using the test runner:
+Test your handler implementation using the test runner.
+
+You can download a prebuilt runner binary from the latest GitHub release. Tagged releases are published automatically by GoReleaser and include archives for supported platforms.
+
+If you prefer to build the runner from source:
 
 ```bash
 # Build the test runner
@@ -54,10 +59,14 @@ make runner
 ./build/runner --handler <path-to-your-handler>
 
 # Configure timeouts (optional)
+# Max wait per test case (default: 10s)
+# Total execution limit (default: 30s)
 ./build/runner --handler <path-to-your-handler> \
-  --handler-timeout 30s \  # Max wait per test case (default: 10s)
-  --timeout 2m             # Total execution limit (default: 30s)
+  --handler-timeout 30s \
+  --timeout 2m
 ```
+
+The runner validates each handler response against the method's JSON schema before comparing it with the expected test outcome.
 
 #### Timeout Flags
 
@@ -85,7 +94,7 @@ The request chains printed by verbose mode can be directly piped to the handler 
 #
 #       Response:
 #       ────────────────────────────────────────
-#       {"result":"$chain_ref"}
+#       {"result":{"ref":"$chain_ref"}}
 
 # Copy the request chain and pipe it to your handler for debugging:
 echo '{"id":"chain#1","method":"btck_context_create","params":{"chain_parameters":{"chain_type":"btck_ChainType_REGTEST"}},"ref":"$context_ref"}
@@ -103,4 +112,10 @@ make build
 
 # Run runner unit tests and integration tests with mock handler
 make test
+
+# Validate all suite JSON files against the suite schema
+make suite-validate
+
+# Regenerate the method reference from schemas
+make specgen
 ```
