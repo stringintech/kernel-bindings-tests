@@ -1,4 +1,4 @@
-.PHONY: all build test clean runner mock-handler suite-validate
+.PHONY: all build test clean runner mock-handler suite-validate specgen
 
 BUILD_DIR := build
 RUNNER_BIN := $(BUILD_DIR)/runner
@@ -27,6 +27,10 @@ test: build
 suite-validate:
 	@echo "Validating testdata against the suite schema..."
 	go run ./cmd/suite-validate
+
+specgen:
+	@echo "Generating method reference from schemas..."
+	go run ./cmd/specgen
 
 clean:
 	@echo "Cleaning build artifacts..."
