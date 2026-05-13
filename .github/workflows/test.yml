@@ -22,3 +22,14 @@ jobs:
 
     - name: Run tests
       run: make test
+
+    - name: Validate test suites
+      run: make suite-validate
+
+    - name: Check generated methods spec doc is up-to-date
+      run: |
+        make specgen
+        if ! git diff --exit-code -- docs/methods-spec.md; then
+          echo "Generated methods spec doc is out of date. Run 'make specgen' and commit the updated docs/methods-spec.md."
+          exit 1
+        fi
