@@ -129,43 +129,37 @@ func (tr *TestRunner) RunTestSuite(ctx context.Context, suite TestSuite, verbosi
 		TotalTests:    len(suite.Tests),
 	}
 
-	skipTests := false
-
 	for i := range suite.Tests {
+		// Check if context is already cancelled
+		if ctx.Err() != nil {
+			fmt.Printf("Skipped remaining %d test case(s) in suite %q because total execution timeout (%v) was exceeded!\n",
+				len(suite.Tests)-i, suite.Title, tr.timeout)
+			break
+		}
+
 		test := &suite.Tests[i]
 
-		// Run the test case
-		var testResult SingleTestResult
-		if skipTests {
-			// In stateful suites, if any previous test failed, fail all subsequent tests
-			testResult = SingleTestResult{
-				TestID:  test.Request.ID,
-				Passed:  false,
-				Message: "Skipped due to previous test failure in stateful suite",
-			}
-		} else {
-			// Build dependency chain by analyzing which refs this test uses
-			if verbosity != VerbosityQuiet {
-				depTracker.BuildDependenciesForTest(i, test)
-			}
+		// Build dependency chain by analyzing which refs this test uses
+		if verbosity != VerbosityQuiet {
+			depTracker.BuildDependenciesForTest(i, test)
+		}
 
-			// Execute the test against the handler
-			testResult = tr.runTest(ctx, test)
+		// Execute the test against the handler
+		testResult := tr.runTest(test)
 
-			// Add verbose output if requested or on failure
-			if (verbosity == VerbosityAlways) || (verbosity == VerbosityOnFailure && !testResult.Passed) {
-				requestChain := depTracker.BuildRequestChain(i, suite.Tests)
-				verboseOutput := formatVerboseOutput(suite.Tests, i, requestChain, &testResult)
-				if testResult.Message != "" {
-					testResult.Message = fmt.Sprintf("%s\n%s", testResult.Message, verboseOutput)
-				} else {
-					testResult.Message = verboseOutput
-				}
+		// Add verbose output if requested or on failure
+		if (verbosity == VerbosityAlways) || (verbosity == VerbosityOnFailure && !testResult.Passed) {
+			requestChain := depTracker.BuildRequestChain(i, suite.Tests)
+			verboseOutput := formatVerboseOutput(suite.Tests, i, requestChain, &testResult)
+			if testResult.Message != "" {
+				testResult.Message = fmt.Sprintf("%s\n%s", testResult.Message, verboseOutput)
+			} else {
+				testResult.Message = verboseOutput
 			}
+		}
 
-			if verbosity != VerbosityQuiet {
-				depTracker.OnTestExecuted(i, test)
-			}
+		if verbosity != VerbosityQuiet {
+			depTracker.OnTestExecuted(i, test)
 		}
 
 		// Collect test case result
@@ -175,7 +169,7 @@ func (tr *TestRunner) RunTestSuite(ctx context.Context, suite TestSuite, verbosi
 		} else {
 			result.FailedTests++
 			if suite.Stateful {
-				skipTests = true
+				break
 			}
 		}
 	}
@@ -185,18 +179,7 @@ func (tr *TestRunner) RunTestSuite(ctx context.Context, suite TestSuite, verbosi
 
 // runTest executes a single test case by sending a request, reading the response,
 // and validating the result matches expected output
-func (tr *TestRunner) runTest(ctx context.Context, test *TestCase) SingleTestResult {
-	// Check if context is already cancelled
-	select {
-	case <-ctx.Done():
-		return SingleTestResult{
-			TestID:  test.Request.ID,
-			Passed:  false,
-			Message: fmt.Sprintf("Total execution timeout exceeded (%v)", tr.timeout),
-		}
-	default:
-	}
-
+func (tr *TestRunner) runTest(test *TestCase) SingleTestResult {
 	err := tr.SendRequest(test.Request)
 	if err != nil {
 		return SingleTestResult{
@@ -434,7 +417,7 @@ func formatVerboseOutput(allTests []TestCase, testIdx int, requestChain []int, t
 				result.WriteString("\n")
 			}
 		} else {
-			result.WriteString("      (no response received)\n")
+			result.WriteString("      (invalid response JSON)\n")
 		}
 
 		// Add expected response header
