@@ -89,7 +89,7 @@ func main() {
 
 		// Run suite
 		result := testRunner.RunTestSuite(ctx, *suite, verbosity)
-		printResults(suite, result)
+		printResults(suite, result, verbosity)
 
 		totalPassed += result.PassedTests
 		totalFailed += result.FailedTests
@@ -115,18 +115,27 @@ func main() {
 	}
 }
 
-func printResults(suite *runner.TestSuite, result runner.TestResult) {
-	fmt.Printf("\nTest Suite: %s (%s)\n", result.SuiteTitle, result.SuiteFileName)
+func printResults(suite *runner.TestSuite, result runner.TestResult, verbosity runner.VerbosityLevel) {
+	if verbosity < runner.VerbosityOnFailure && result.FailedTests == 0 {
+		return
+	}
+
+	fmt.Printf("=== %s (%s) ===\n", result.SuiteTitle, result.SuiteFileName)
 	if suite.Description != "" {
-		fmt.Printf("Description: %s\n", suite.Description)
+		fmt.Printf("%s\n", suite.Description)
 	}
 	totalSkipped := result.TotalTests - (result.PassedTests + result.FailedTests)
-	fmt.Printf("Total: %d, Passed: %d, Failed: %d, Skipped: %d\n\n", result.TotalTests, result.PassedTests,
+	fmt.Printf("Total: %d, Passed: %d, Failed: %d, Skipped: %d\n", result.TotalTests, result.PassedTests,
 		result.FailedTests, totalSkipped)
 
 	for i, tr := range result.TestResults {
-		status := "✓"
-		if !tr.Passed {
+		var status string
+		if tr.Passed {
+			if verbosity < runner.VerbosityAlways {
+				continue
+			}
+			status = "✓"
+		} else {
 			status = "✗"
 		}
 
