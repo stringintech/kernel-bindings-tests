@@ -129,8 +129,6 @@ func (tr *TestRunner) RunTestSuite(ctx context.Context, suite TestSuite, verbosi
 		TotalTests:    len(suite.Tests),
 	}
 
-	skipTests := false
-
 	for i := range suite.Tests {
 		// Check if context is already cancelled
 		if ctx.Err() != nil {
@@ -141,29 +139,18 @@ func (tr *TestRunner) RunTestSuite(ctx context.Context, suite TestSuite, verbosi
 
 		test := &suite.Tests[i]
 
-		// Run the test case
-		var testResult SingleTestResult
-		if skipTests {
-			// In stateful suites, if any previous test failed, fail all subsequent tests
-			testResult = SingleTestResult{
-				TestID:  test.Request.ID,
-				Passed:  false,
-				Message: "Skipped due to previous test failure in stateful suite",
-			}
-		} else {
-			// Execute the test against the handler
-			testResult = tr.runTest(test)
+		// Execute the test against the handler
+		testResult := tr.runTest(test)
 
-			// Track dependencies and add verbose output if requested or on failure
-			if verbosity != VerbosityQuiet {
-				requestChain := depTracker.OnTestExecuted(test)
-				if (verbosity == VerbosityAlways) || (verbosity == VerbosityOnFailure && !testResult.Passed) {
-					verboseOutput := formatVerboseOutput(suite.Tests, i, requestChain, &testResult)
-					if testResult.Message != "" {
-						testResult.Message = fmt.Sprintf("%s\n%s", testResult.Message, verboseOutput)
-					} else {
-						testResult.Message = verboseOutput
-					}
+		// Track dependencies and add verbose output if requested or on failure
+		if verbosity != VerbosityQuiet {
+			requestChain := depTracker.OnTestExecuted(test)
+			if (verbosity == VerbosityAlways) || (verbosity == VerbosityOnFailure && !testResult.Passed) {
+				verboseOutput := formatVerboseOutput(suite.Tests, i, requestChain, &testResult)
+				if testResult.Message != "" {
+					testResult.Message = fmt.Sprintf("%s\n%s", testResult.Message, verboseOutput)
+				} else {
+					testResult.Message = verboseOutput
 				}
 			}
 		}
