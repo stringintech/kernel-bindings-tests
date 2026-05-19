@@ -66,14 +66,24 @@ func main() {
 	totalPassed := 0
 	totalFailed := 0
 	totalTests := 0
+	loggedTimeout := false
 
-	for _, testFile := range testFiles {
-		fmt.Printf("\n=== Running test suite ===\n")
-
+	for suiteIdx, testFile := range testFiles {
 		// Load test suite from embedded FS
 		suite, err := runner.LoadTestSuiteFromFS(testdata.FS, testFile)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error loading test suite: %v\n", err)
+			continue
+		}
+		totalTests += len(suite.Tests)
+
+		// Check if context is already cancelled
+		if ctx.Err() != nil {
+			if !loggedTimeout {
+				fmt.Printf("Skipped remaining %d test suite(s) because total execution timeout (%v) was exceeded!\n",
+					len(testFiles)-suiteIdx, *timeout)
+				loggedTimeout = true
+			}
 			continue
 		}
 
@@ -83,7 +93,6 @@ func main() {
 
 		totalPassed += result.PassedTests
 		totalFailed += result.FailedTests
-		totalTests += result.TotalTests
 
 		// Close handler after stateful suites to prevent state leaks.
 		// A new handler process will be spawned on-demand when the next request is sent.
@@ -98,9 +107,10 @@ func main() {
 	fmt.Printf("Total Tests: %d\n", totalTests)
 	fmt.Printf("Passed:      %d\n", totalPassed)
 	fmt.Printf("Failed:      %d\n", totalFailed)
+	fmt.Printf("Skipped:     %d\n", totalTests-(totalPassed+totalFailed))
 	fmt.Printf(strings.Repeat("=", 60) + "\n")
 
-	if totalFailed > 0 {
+	if totalTests > totalPassed {
 		os.Exit(1)
 	}
 }
@@ -110,7 +120,9 @@ func printResults(suite *runner.TestSuite, result runner.TestResult) {
 	if suite.Description != "" {
 		fmt.Printf("Description: %s\n", suite.Description)
 	}
-	fmt.Printf("Total: %d, Passed: %d, Failed: %d\n\n", result.TotalTests, result.PassedTests, result.FailedTests)
+	totalSkipped := result.TotalTests - (result.PassedTests + result.FailedTests)
+	fmt.Printf("Total: %d, Passed: %d, Failed: %d, Skipped: %d\n\n", result.TotalTests, result.PassedTests,
+		result.FailedTests, totalSkipped)
 
 	for i, tr := range result.TestResults {
 		status := "✓"
