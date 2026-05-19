@@ -67,6 +67,7 @@ func main() {
 	totalFailed := 0
 	totalTests := 0
 	loggedTimeout := false
+	failedTestLines := make([]string, 0)
 
 	for suiteIdx, testFile := range testFiles {
 		// Load test suite from embedded FS
@@ -90,6 +91,7 @@ func main() {
 		// Run suite
 		result := testRunner.RunTestSuite(ctx, *suite, verbosity)
 		printResults(suite, result, verbosity)
+		failedTestLines = append(failedTestLines, collectFailedTestLines(suite, result)...)
 
 		totalPassed += result.PassedTests
 		totalFailed += result.FailedTests
@@ -98,6 +100,15 @@ func main() {
 		// A new handler process will be spawned on-demand when the next request is sent.
 		if suite.Stateful {
 			testRunner.CloseHandler()
+		}
+	}
+
+	if len(failedTestLines) > 0 {
+		fmt.Printf("\n" + strings.Repeat("=", 60) + "\n")
+		fmt.Printf("FAILED TESTS\n")
+		fmt.Printf(strings.Repeat("=", 60) + "\n")
+		for _, line := range failedTestLines {
+			fmt.Printf("%s\n", line)
 		}
 	}
 
@@ -151,4 +162,15 @@ func printResults(suite *runner.TestSuite, result runner.TestResult, verbosity r
 	}
 
 	fmt.Printf("\n")
+}
+
+func collectFailedTestLines(suite *runner.TestSuite, result runner.TestResult) []string {
+	lines := make([]string, 0, result.FailedTests)
+	for i, tr := range result.TestResults {
+		if tr.Passed {
+			continue
+		}
+		lines = append(lines, fmt.Sprintf("%s %s (%s)", result.SuiteFileName, tr.TestID, suite.Tests[i].Description))
+	}
+	return lines
 }
