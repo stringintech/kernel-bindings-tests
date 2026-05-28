@@ -1,5 +1,5 @@
 {
-  "name": "Failed Script Verification Cases",
+  "title": "Script Verification Error Cases",
   "description": "Test cases where the verification operation fails to determine validity of the script due to bad user input",
   "stateful": true,
   "tests": [
@@ -126,9 +126,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy transaction",
@@ -141,9 +139,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy script pubkey",
@@ -156,9 +152,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     }
   ]
 }

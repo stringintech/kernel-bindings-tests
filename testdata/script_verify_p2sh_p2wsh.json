@@ -1,5 +1,5 @@
 {
-  "name": "script_verify_p2sh_p2wsh",
+  "title": "Script Verification - P2SH-P2WSH",
   "description": "Verifies a mainnet P2SH-P2WSH (2-of-3 multisig) output against two variants: valid witness sigs (passes with P2SH + WITNESS and all pre-taproot flags), corrupted witness sig (fails with WITNESS enforced, passes with P2SH only). Mainnet tx 017be55761bf5a3920c73778810a6be4c3315dc6efa4f31b590bc3bc1da9d75f.",
   "stateful": true,
   "tests": [
@@ -122,9 +122,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy valid P2SH-P2WSH transaction",
@@ -137,9 +135,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Create P2SH-P2WSH transaction with corrupted signature (one byte flipped in witness)",
@@ -239,9 +235,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy corrupted sig P2SH-P2WSH transaction",
@@ -254,9 +248,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy P2SH-P2WSH script pubkey",
@@ -269,9 +261,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     }
   ]
 }

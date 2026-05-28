@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$ref": "./shared.json#/$defs/HexStringResponse",
+      "description": "Hex-encoded consensus serialization of the transaction"
+    },
+    {
+      "$ref": "./shared.json#/$defs/GenericErrorResponse"
+    }
+  ]
+}

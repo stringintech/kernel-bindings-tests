@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Destroys a chainstate manager and frees associated resources",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "btck_chainstate_manager_destroy"
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "chainstate_manager"
+          ],
+          "properties": {
+            "chainstate_manager": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Chainstate manager reference to destroy"
+            }
+          }
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./btck_chainstate_manager_destroy.response.json"
+    }
+  }
+}

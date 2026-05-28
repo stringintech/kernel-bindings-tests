@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Creates precomputed transaction data for script verification. Precomputed data is reusable when verifying multiple inputs of the same transaction",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params",
+        "ref"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "btck_precomputed_transaction_data_create"
+        },
+        "params": {
+          "type": "object",
+          "x-doc-order": [
+            "tx_to",
+            "spent_outputs"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "tx_to"
+          ],
+          "properties": {
+            "tx_to": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Transaction reference"
+            },
+            "spent_outputs": {
+              "type": "array",
+              "items": {
+                "$ref": "./shared.json#/$defs/RefObject"
+              },
+              "description": "Array of TransactionOutput references. Required when `btck_ScriptVerificationFlags_TAPROOT` is set"
+            }
+          }
+        },
+        "ref": {
+          "$ref": "./shared.json#/$defs/RefString"
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./btck_precomputed_transaction_data_create.response.json"
+    }
+  }
+}

@@ -13,9 +13,10 @@ type TestCase struct {
 
 // TestSuite represents a collection of test cases
 type TestSuite struct {
-	Name        string     `json:"name"`
+	Title       string     `json:"title"`
 	Description string     `json:"description,omitempty"`
 	Tests       []TestCase `json:"tests"`
+	FileName    string     `json:"-"`
 
 	// Stateful indicates that tests in this suite depend on each other and must
 	// execute sequentially. If any test fails in a stateful suite, all subsequent

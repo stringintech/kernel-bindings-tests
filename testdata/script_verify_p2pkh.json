@@ -1,5 +1,5 @@
 {
-  "name": "script_verify_p2pkh",
+  "title": "Script Verification - P2PKH",
   "description": "Verifies a mainnet P2PKH output against three transaction variants: valid sig (passes with no flags and all pre-taproot flags), corrupted sig (always fails), non-DER sig (passes without DERSIG, fails with it). Mainnet tx aca326a724eda9a461c10a876534ecd5ae7b27f10f26c3862fb996f80ea2d45d.",
   "stateful": true,
   "tests": [
@@ -121,9 +121,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy valid P2PKH transaction",
@@ -136,9 +134,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Create P2PKH transaction with corrupted signature (one byte flipped)",
@@ -211,9 +207,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy corrupted sig P2PKH transaction",
@@ -226,9 +220,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Create P2PKH transaction with non-DER signature (length byte 0x46 instead of 0x45)",
@@ -327,9 +319,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy non-DER sig P2PKH transaction",
@@ -342,9 +332,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy P2PKH script pubkey",
@@ -357,9 +345,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     }
   ]
 }

@@ -1,10 +1,10 @@
 {
-  "name": "Chain",
+  "title": "Chain Operations",
   "description": "Sets up blocks, checks chain state, and verifies that the chain tip changes as expected after a reorg scenario",
   "stateful": true,
   "tests": [
     {
-      "description": "Create context with regtest chain parameters",
+      "description": "Creates a context with regtest chain parameters",
       "request": {
         "id": "chain#1",
         "method": "btck_context_create",
@@ -22,7 +22,7 @@
       }
     },
     {
-      "description": "Create chainstate manager from context",
+      "description": "Creates a chainstate manager from the context",
       "request": {
         "id": "chain#2",
         "method": "btck_chainstate_manager_create",
@@ -40,7 +40,7 @@
       }
     },
     {
-      "description": "Destroy context as it's no longer needed",
+      "description": "Destroys the context after creating the chainstate manager",
       "request": {
         "id": "chain#3",
         "method": "btck_context_destroy",
@@ -50,12 +50,10 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
-      "description": "Get active chain reference from chainstate manager",
+      "description": "Gets the active chain reference from the chainstate manager",
       "request": {
         "id": "chain#4",
         "method": "btck_chainstate_manager_get_active_chain",
@@ -73,7 +71,7 @@
       }
     },
     {
-      "description": "Assert chain height is 0 (genesis block only)",
+      "description": "Verifies the active chain starts at height 0",
       "request": {
         "id": "chain#5",
         "method": "btck_chain_get_height",
@@ -88,7 +86,7 @@
       }
     },
     {
-      "description": "Create block 1 from raw hex data",
+      "description": "Creates block 1 from raw bytes",
       "request": {
         "id": "chain#6",
         "method": "btck_block_create",
@@ -104,7 +102,7 @@
       }
     },
     {
-      "description": "Process block 1, extending chain to height 1",
+      "description": "Processes block 1 to extend the chain to height 1",
       "request": {
         "id": "chain#7",
         "method": "btck_chainstate_manager_process_block",
@@ -124,9 +122,22 @@
       }
     },
     {
-      "description": "Create block 2 from raw hex data",
+      "description": "Destroys block 1 after processing",
       "request": {
         "id": "chain#8",
+        "method": "btck_block_destroy",
+        "params": {
+          "block": {
+            "ref": "$block_1"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Creates block 2 from raw bytes",
+      "request": {
+        "id": "chain#9",
         "method": "btck_block_create",
         "params": {
           "raw_block": "000000205e2f859d70e29641f32371f3bf17a282466ad851f9e51b44a70738abeace314a9cf876c62dbbe036af4ea4a7363cd4ca1c14c8572095cba3b76a87daa1303ed8dce5494dffff7f200200000001020000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff025200feffffff0200f2052a010000001976a9142b4569203694fc997e13f2c0a1383b9e16c77a0d88ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000001000000"
@@ -140,9 +151,9 @@
       }
     },
     {
-      "description": "Process block 2, extending chain to height 2",
+      "description": "Processes block 2 to extend the chain to height 2",
       "request": {
-        "id": "chain#9",
+        "id": "chain#10",
         "method": "btck_chainstate_manager_process_block",
         "params": {
           "chainstate_manager": {
@@ -160,9 +171,22 @@
       }
     },
     {
-      "description": "Create block 3 from raw hex data",
+      "description": "Destroys block 2 after processing",
       "request": {
-        "id": "chain#10",
+        "id": "chain#11",
+        "method": "btck_block_destroy",
+        "params": {
+          "block": {
+            "ref": "$block_2"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Creates block 3 from raw bytes",
+      "request": {
+        "id": "chain#12",
         "method": "btck_block_create",
         "params": {
           "raw_block": "0000002077622c1ae937c9fec6be84d01521cb31b0e6f88ec48150965323dba6a1e36e19354352df0f2a5d635ca7d3a52064f9c95f070d2c13c0a6c087acba03dfeeae66dde5494dffff7f200000000001020000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff025300feffffff0200f2052a010000001976a9142b4569203694fc997e13f2c0a1383b9e16c77a0d88ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000002000000"
@@ -176,9 +200,9 @@
       }
     },
     {
-      "description": "Process block 3, extending chain to height 3",
+      "description": "Processes block 3 to extend the chain to height 3",
       "request": {
-        "id": "chain#11",
+        "id": "chain#13",
         "method": "btck_chainstate_manager_process_block",
         "params": {
           "chainstate_manager": {
@@ -196,9 +220,22 @@
       }
     },
     {
-      "description": "Assert chain height is 3 after processing blocks",
+      "description": "Destroys block 3 after processing",
       "request": {
-        "id": "chain#12",
+        "id": "chain#14",
+        "method": "btck_block_destroy",
+        "params": {
+          "block": {
+            "ref": "$block_3"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Verifies the active chain height is 3 after processing blocks",
+      "request": {
+        "id": "chain#15",
         "method": "btck_chain_get_height",
         "params": {
           "chain": {
@@ -211,9 +248,9 @@
       }
     },
     {
-      "description": "Get block tree entry at height 3 to use after reorg",
+      "description": "Gets the height-3 block tree entry before the reorg",
       "request": {
-        "id": "chain#13",
+        "id": "chain#16",
         "method": "btck_chain_get_by_height",
         "params": {
           "chain": {
@@ -230,24 +267,42 @@
       }
     },
     {
-      "description": "Assert tip block hash matches expected value",
+      "description": "Gets the current tip block hash",
       "request": {
-        "id": "chain#14",
+        "id": "chain#17",
         "method": "btck_block_tree_entry_get_block_hash",
         "params": {
           "block_tree_entry": {
             "ref": "$tip_entry"
           }
-        }
+        },
+        "ref": "$tip_hash"
       },
       "expected_response": {
-        "result": "1a81e97231fb262ccf464f937553a1deff996ac6901b062d0b35afe025ee2886"
+        "result": {
+          "ref": "$tip_hash"
+        }
       }
     },
     {
-      "description": "Create reorg block 1 (competing block at height 2)",
+      "description": "Verifies the current tip block hash bytes",
       "request": {
-        "id": "chain#15",
+        "id": "chain#18",
+        "method": "btck_block_hash_to_bytes",
+        "params": {
+          "block_hash": {
+            "ref": "$tip_hash"
+          }
+        }
+      },
+      "expected_response": {
+        "result": "8628ee25e0af350b2d061b90c66a99ffdea15375934f46cf2c26fb3172e9811a"
+      }
+    },
+    {
+      "description": "Creates the first competing block at height 2",
+      "request": {
+        "id": "chain#19",
         "method": "btck_block_create",
         "params": {
           "raw_block": "000000205e2f859d70e29641f32371f3bf17a282466ad851f9e51b44a70738abeace314a9cf876c62dbbe036af4ea4a7363cd4ca1c14c8572095cba3b76a87daa1303ed8dee5494dffff7f200000000001020000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff025200feffffff0200f2052a010000001976a9142b4569203694fc997e13f2c0a1383b9e16c77a0d88ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000001000000"
@@ -261,9 +316,9 @@
       }
     },
     {
-      "description": "Process reorg block 1",
+      "description": "Processes the first competing block",
       "request": {
-        "id": "chain#16",
+        "id": "chain#20",
         "method": "btck_chainstate_manager_process_block",
         "params": {
           "chainstate_manager": {
@@ -281,9 +336,22 @@
       }
     },
     {
-      "description": "Create reorg block 2 (competing block at height 3)",
+      "description": "Destroys the first competing block after processing",
       "request": {
-        "id": "chain#17",
+        "id": "chain#21",
+        "method": "btck_block_destroy",
+        "params": {
+          "block": {
+            "ref": "$reorg_block_1"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Creates the second competing block at height 3",
+      "request": {
+        "id": "chain#22",
         "method": "btck_block_create",
         "params": {
           "raw_block": "000000202c6c418b1f714cbe22c9c2906a5c1a3f5c0df22d32989b71f579b2289a0ccd4c354352df0f2a5d635ca7d3a52064f9c95f070d2c13c0a6c087acba03dfeeae66dfe5494dffff7f200200000001020000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff025300feffffff0200f2052a010000001976a9142b4569203694fc997e13f2c0a1383b9e16c77a0d88ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000002000000"
@@ -297,9 +365,9 @@
       }
     },
     {
-      "description": "Process reorg block 2",
+      "description": "Processes the second competing block",
       "request": {
-        "id": "chain#18",
+        "id": "chain#23",
         "method": "btck_chainstate_manager_process_block",
         "params": {
           "chainstate_manager": {
@@ -317,9 +385,22 @@
       }
     },
     {
-      "description": "Create reorg block 3 (extending chain to height 4, triggering reorg)",
+      "description": "Destroys the second competing block after processing",
       "request": {
-        "id": "chain#19",
+        "id": "chain#24",
+        "method": "btck_block_destroy",
+        "params": {
+          "block": {
+            "ref": "$reorg_block_2"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Creates the third competing block that extends the branch to height 4",
+      "request": {
+        "id": "chain#25",
         "method": "btck_block_create",
         "params": {
           "raw_block": "00000020732f2f7a1035b802d670218031da2b11d0fe7297ddaeb4a428fc51bf588770417bd00ba57498a2dfcf4e3f0d7ef7f279b254fc422133f300a49aed3c8ed7717fe0e5494dffff7f200100000001020000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff025400feffffff0200f2052a010000001976a9142b4569203694fc997e13f2c0a1383b9e16c77a0d88ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000003000000"
@@ -333,9 +414,9 @@
       }
     },
     {
-      "description": "Process reorg block 3, triggering chain reorganization",
+      "description": "Processes the third competing block to trigger a reorg",
       "request": {
-        "id": "chain#20",
+        "id": "chain#26",
         "method": "btck_chainstate_manager_process_block",
         "params": {
           "chainstate_manager": {
@@ -353,9 +434,22 @@
       }
     },
     {
-      "description": "Assert chain height is 4 after processing reorg block 3",
+      "description": "Destroys the third competing block after processing",
       "request": {
-        "id": "chain#21",
+        "id": "chain#27",
+        "method": "btck_block_destroy",
+        "params": {
+          "block": {
+            "ref": "$reorg_block_3"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Verifies the active chain height is 4 after the reorg",
+      "request": {
+        "id": "chain#28",
         "method": "btck_chain_get_height",
         "params": {
           "chain": {
@@ -368,9 +462,9 @@
       }
     },
     {
-      "description": "Verify that the old tip is no longer in the active chain after reorg",
+      "description": "Verifies the old height-3 tip is no longer active after the reorg",
       "request": {
-        "id": "chain#22",
+        "id": "chain#29",
         "method": "btck_chain_contains",
         "params": {
           "chain": {
@@ -386,9 +480,9 @@
       }
     },
     {
-      "description": "Get block tree entry at height 4 (new tip after reorg)",
+      "description": "Gets the height-4 block tree entry after the reorg",
       "request": {
-        "id": "chain#23",
+        "id": "chain#30",
         "method": "btck_chain_get_by_height",
         "params": {
           "chain": {
@@ -405,24 +499,42 @@
       }
     },
     {
-      "description": "Assert new tip block hash matches expected value after reorg",
+      "description": "Gets the new tip block hash after the reorg",
       "request": {
-        "id": "chain#24",
+        "id": "chain#31",
         "method": "btck_block_tree_entry_get_block_hash",
         "params": {
           "block_tree_entry": {
             "ref": "$new_tip_entry"
           }
-        }
+        },
+        "ref": "$new_tip_hash"
       },
       "expected_response": {
-        "result": "18618dcf64dddb10ea15d7850bc4c7965c9a72b613da8530b83057672f29bbfa"
+        "result": {
+          "ref": "$new_tip_hash"
+        }
       }
     },
     {
-      "description": "Destroy chainstate manager",
+      "description": "Verifies the new tip block hash bytes after the reorg",
       "request": {
-        "id": "chain#25",
+        "id": "chain#32",
+        "method": "btck_block_hash_to_bytes",
+        "params": {
+          "block_hash": {
+            "ref": "$new_tip_hash"
+          }
+        }
+      },
+      "expected_response": {
+        "result": "fabb292f675730b83085da13b6729a5c96c7c40b85d715ea10dbdd64cf8d6118"
+      }
+    },
+    {
+      "description": "Destroys the chainstate manager",
+      "request": {
+        "id": "chain#33",
         "method": "btck_chainstate_manager_destroy",
         "params": {
           "chainstate_manager": {
@@ -430,9 +542,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     }
   ]
 }

@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Retrieves the output at the given index from a transaction",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "btck_transaction_get_output_at"
+        },
+        "params": {
+          "type": "object",
+          "x-doc-order": [
+            "transaction",
+            "output_index"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "transaction": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Transaction reference"
+            },
+            "output_index": {
+              "type": "integer",
+              "description": "Zero-based output index"
+            }
+          },
+          "required": [
+            "transaction",
+            "output_index"
+          ]
+        },
+        "ref": {
+          "$ref": "./shared.json#/$defs/RefString"
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./btck_transaction_get_output_at.response.json"
+    }
+  }
+}

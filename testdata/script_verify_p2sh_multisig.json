@@ -1,5 +1,5 @@
 {
-  "name": "script_verify_p2sh_multisig",
+  "title": "Script Verification - P2SH Multisig",
   "description": "Verifies a mainnet P2SH 2-of-3 multisig output against three variants: valid sigs (passes with P2SH and all pre-taproot flags), corrupted sig (fails with P2SH, passes without it), non-null dummy element (passes with P2SH only, fails when NULLDUMMY is also set). Mainnet tx 3cd7f78499632d6f672d8a9412ae756b29c41342954c97846e0d153c7753a37e.",
   "stateful": true,
   "tests": [
@@ -121,9 +121,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy valid P2SH multisig transaction",
@@ -136,9 +134,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Create P2SH multisig transaction with corrupted signature (length byte 0x31 instead of 0x30)",
@@ -237,9 +233,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy corrupted sig P2SH multisig transaction",
@@ -252,9 +246,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Create P2SH multisig transaction with non-null dummy stack element (OP_1 instead of OP_0)",
@@ -354,9 +346,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy non-null dummy P2SH multisig transaction",
@@ -369,9 +359,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy P2SH multisig script pubkey",
@@ -384,9 +372,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     }
   ]
 }

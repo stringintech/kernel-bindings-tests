@@ -1,5 +1,5 @@
 {
-  "name": "script_verify_cltv",
+  "title": "Script Verification - CLTV",
   "description": "Verifies a P2SH output with OP_CHECKLOCKTIMEVERIFY locked to block 100. Transaction with locktime=100 passes with P2SH + CHECKLOCKTIMEVERIFY and all pre-taproot flags; transaction with locktime=50 fails when CHECKLOCKTIMEVERIFY is enforced but passes with P2SH only.",
   "stateful": true,
   "tests": [
@@ -122,9 +122,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy valid locktime CLTV transaction",
@@ -137,9 +135,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Create CLTV transaction with locktime=50 (does not satisfy CLTV condition)",
@@ -239,9 +235,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy invalid locktime CLTV transaction",
@@ -254,9 +248,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     },
     {
       "description": "Destroy CLTV P2SH script pubkey",
@@ -269,9 +261,7 @@
           }
         }
       },
-      "expected_response": {
-        "result": null
-      }
+      "expected_response": {}
     }
   ]
 }

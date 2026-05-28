@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "NonEmptyText": {
+      "type": "string",
+      "pattern": ".*\\S.*"
+    },
+    "TestCaseID": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_]+#[0-9]+$"
+    },
+    "RefString": {
+      "type": "string",
+      "pattern": "^\\$[A-Za-z0-9_]+$"
+    },
+    "RefObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref"],
+      "properties": {
+        "ref": { "$ref": "#/$defs/RefString" }
+      }
+    },
+    "RefResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result"],
+      "properties": {
+        "result": { "$ref": "#/$defs/RefObject" },
+        "error": { "type": "null" }
+      }
+    },
+    "BooleanResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result"],
+      "properties": {
+        "result": { "type": "boolean" },
+        "error": { "type": "null" }
+      }
+    },
+    "NullResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "result": { "type": "null" },
+        "error": { "type": "null" }
+      }
+    },
+    "IntegerResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result"],
+      "properties": {
+        "result": { "type": "integer" },
+        "error": { "type": "null" }
+      }
+    },
+    "Hex64String": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "Hex64StringResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result"],
+      "properties": {
+        "result": { "$ref": "#/$defs/Hex64String" },
+        "error": { "type": "null" }
+      }
+    },
+    "HexString": {
+      "type": "string",
+      "pattern": "^[0-9a-f]*$"
+    },
+    "HexStringResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result"],
+      "properties": {
+        "result": { "$ref": "#/$defs/HexString" },
+        "error": { "type": "null" }
+      }
+    },
+    "GenericErrorResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["error"],
+      "properties": {
+        "result": {
+          "type": "null"
+        },
+        "error": {
+          "type": "object",
+          "additionalProperties": false
+        }
+      }
+    }
+  }
+}

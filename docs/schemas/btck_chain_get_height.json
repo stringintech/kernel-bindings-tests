@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Gets the current height of the active chain",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "btck_chain_get_height"
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "chain"
+          ],
+          "properties": {
+            "chain": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Chain reference"
+            }
+          }
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./btck_chain_get_height.response.json"
+    }
+  }
+}
