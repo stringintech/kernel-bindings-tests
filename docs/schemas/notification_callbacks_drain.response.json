@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Array of invocation records, one per callback fired since the last drain. Each record is an object with a `callback` field identifying the type, plus type-specific fields:\n- `btck_NotifyBlockTip`: `state` (SynchronizationState string), `entry` (reference to a BlockTreeEntry)\n- `btck_NotifyHeaderTip`: `state` (SynchronizationState string), `height` (integer), `timestamp` (integer), `presync` (boolean)\n- `btck_NotifyProgress`: `title` (string), `percent` (integer), `resumable` (boolean)\n- `btck_NotifyWarningSet`: `warning` (Warning string), `message` (string)\n- `btck_NotifyWarningUnset`: `warning` (Warning string)\n- `btck_NotifyFlushError`: `message` (string)\n- `btck_NotifyFatalError`: `message` (string)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["result"],
+  "properties": {
+    "result": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["callback", "state", "entry"],
+            "properties": {
+              "callback": { "const": "btck_NotifyBlockTip" },
+              "state": { "$ref": "./shared.json#/$defs/SynchronizationState" },
+              "entry": { "$ref": "./shared.json#/$defs/RefObject" }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["callback", "state", "height", "timestamp", "presync"],
+            "properties": {
+              "callback": { "const": "btck_NotifyHeaderTip" },
+              "state": { "$ref": "./shared.json#/$defs/SynchronizationState" },
+              "height": { "type": "integer" },
+              "timestamp": { "type": "integer" },
+              "presync": { "type": "boolean" }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["callback", "title", "percent", "resumable"],
+            "properties": {
+              "callback": { "const": "btck_NotifyProgress" },
+              "title": { "type": "string" },
+              "percent": { "type": "integer" },
+              "resumable": { "type": "boolean" }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["callback", "warning", "message"],
+            "properties": {
+              "callback": { "const": "btck_NotifyWarningSet" },
+              "warning": { "enum": ["btck_Warning_UNKNOWN_NEW_RULES_ACTIVATED", "btck_Warning_LARGE_WORK_INVALID_CHAIN"] },
+              "message": { "type": "string" }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["callback", "warning"],
+            "properties": {
+              "callback": { "const": "btck_NotifyWarningUnset" },
+              "warning": { "enum": ["btck_Warning_UNKNOWN_NEW_RULES_ACTIVATED", "btck_Warning_LARGE_WORK_INVALID_CHAIN"] }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["callback", "message"],
+            "properties": {
+              "callback": { "const": "btck_NotifyFlushError" },
+              "message": { "type": "string" }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["callback", "message"],
+            "properties": {
+              "callback": { "const": "btck_NotifyFatalError" },
+              "message": { "type": "string" }
+            }
+          }
+        ]
+      }
+    },
+    "error": { "type": "null" }
+  }
+}

@@ -285,6 +285,94 @@ func TestDependencyTracker(t *testing.T) {
 				},
 			},
 		},
+		{
+			// tests callback interface dependency tracking: refs produced in a drain
+			// response are stateful, so tests using them inherit all prior state dependencies
+			name: "callbacks",
+			cases: []entry{
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "callbacks#0",
+							Method: "notification_callbacks_create",
+							Params: json.RawMessage(`{"callbacks": ["btck_NotifyBlockTip"]}`),
+							Ref:    "$notif",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$notif"}`)},
+					},
+					expectedChain: []int{},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "callbacks#1",
+							Method: "btck_context_create",
+							Params: json.RawMessage(`{"notifications": {"ref": "$notif"}}`),
+							Ref:    "$context",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$context"}`)},
+					},
+					expectedChain: []int{0},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "callbacks#2",
+							Method: "btck_chainstate_manager_create",
+							Params: json.RawMessage(`{"context": {"ref": "$context"}}`),
+							Ref:    "$chainman",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$chainman"}`)},
+					},
+					expectedChain: []int{0, 1},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "callbacks#3",
+							Method: "btck_block_create",
+							Params: json.RawMessage(`{"raw_block": "deadbeef"}`),
+							Ref:    "$block",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$block"}`)},
+					},
+					expectedChain: []int{},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "callbacks#4",
+							Method: "btck_chainstate_manager_process_block",
+							Params: json.RawMessage(`{"chainstate_manager": {"ref": "$chainman"}, "block": {"ref": "$block"}}`),
+						},
+						ExpectedResponse: Response{},
+					},
+					expectedChain: []int{0, 1, 2, 3},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "callbacks#5",
+							Method: "notification_callbacks_drain",
+							Params: json.RawMessage(`{"interface": {"ref": "$notif"}}`),
+						},
+						ExpectedResponse: Response{Result: Result(`[{"callback": "btck_NotifyBlockTip", "entry": {"ref": "$entry"}}]`)},
+					},
+					expectedChain: []int{0, 1, 2, 3, 4},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "callbacks#6",
+							Method: "btck_block_tree_entry_get_height",
+							Params: json.RawMessage(`{"entry": {"ref": "$entry"}}`),
+						},
+						ExpectedResponse: Response{Result: Result(`1`)},
+					},
+					expectedChain: []int{0, 1, 2, 3, 4, 5},
+				},
+			},
+		},
 	}
 
 	for _, s := range suites {

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Drains all queued callback invocation records from a notification callbacks interface",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "notification_callbacks_drain"
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "interface"
+          ],
+          "x-doc-order": ["interface"],
+          "properties": {
+            "interface": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Notification callbacks interface reference"
+            }
+          }
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./notification_callbacks_drain.response.json"
+    }
+  }
+}

@@ -9,8 +9,12 @@ import (
 // Refs created by these methods are tracked as stateful, meaning tests
 // using these refs depend on mutable state.
 var statefulCreatorMethods = map[string]bool{
-	"btck_context_create":            true,
-	"btck_chainstate_manager_create": true,
+	"btck_context_create":                   true,
+	"btck_chainstate_manager_create":        true,
+	"notification_callbacks_create":         true,
+	"validation_interface_callbacks_create": true,
+	"notification_callbacks_drain":          true,
+	"validation_callbacks_drain":            true,
 }
 
 // stateMutatingMethods contains methods that mutate internal state.

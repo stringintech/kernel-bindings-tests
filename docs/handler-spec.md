@@ -81,7 +81,7 @@ Many operations return objects (contexts, blocks, chains, etc.) that must persis
 // Request
 {"id": "1", "method": "btck_context_create", "params": {...}, "ref": "$ctx1"}
 // Response
-{"id": "1", "result": {"ref": "$ctx1"}, "error": null}
+{"id": "1", "result": {"ref": "$ctx1"}}
 // Handler action: registry["$ctx1"] = created_context_ptr
 ```
 
@@ -91,11 +91,71 @@ Many operations return objects (contexts, blocks, chains, etc.) that must persis
 // Request
 {"id": "2", "method": "btck_chainstate_manager_create", "params": {"context": {"ref": "$ctx1"}}, "ref": "$csm1"}
 // Response
-{"id": "2", "result": {"ref": "$csm1"}, "error": null}
+{"id": "2", "result": {"ref": "$csm1"}}
 // Handler action: Extract ref from params.context, look up registry["$ctx1"], create manager, store as registry["$csm1"]
 ```
 
 **Implementation**: Handlers must maintain a registry (map of reference names to object pointers) throughout their lifetime. Objects remain alive until explicitly destroyed or handler exit.
+
+## Callback Interfaces
+
+Some kernel operations trigger callbacks — notification events and validation interface events — that fire synchronously during the operation. The protocol requires handlers to implement two callback interfaces as queueing objects: each maintains an internal invocation queue, records every callback firing into it, and exposes that queue via a drain method. This gives the runner a way to assert which callbacks fired, in what order, and what values they carried.
+
+### Creation and Wiring
+
+Callback interface objects are binding-level objects — not direct C kernel API handles, but wired into the kernel at context creation time. The protocol introduces dedicated methods for creating them — `notification_callbacks_create` and `validation_interface_callbacks_create` — deliberately omitting the `btck_` prefix to make clear they have no direct C API counterpart. They follow the same ref/registry pattern as kernel objects. Interface refs are passed as optional params to `btck_context_create` to wire them in:
+
+The `callbacks` param is required and must list at least one callback name. The interface only queues invocations for the listed callbacks; any unlisted callback fires at the C level but is silently discarded.
+
+```json
+// Request
+{"id": "1", "method": "notification_callbacks_create", "params": {"callbacks": ["btck_NotifyBlockTip"]}, "ref": "$notif"}
+// Response
+{"id": "1", "result": {"ref": "$notif"}}
+
+// Request
+{"id": "2", "method": "btck_context_create", "params": {"chain_parameters": {...}, "notifications": {"ref": "$notif"}}, "ref": "$ctx"}
+// Response
+{"id": "2", "result": {"ref": "$ctx"}}
+```
+
+Neither interface has a matching destroy method. Both are cleaned up implicitly when the chainstate manager associated with the wired context is destroyed.
+
+### Invocation Recording
+
+When a callback fires, the interface implementation must append an invocation record to its per-interface queue. An invocation record identifies the callback that fired and carries its arguments: non-object values are inlined, object arguments are held internally by the handler and appear in the record as `{"ref": "<ref-name>"}`. The queue preserves firing order and accumulates records until drained.
+
+Ref names for callback-produced objects must follow a deterministic pattern so the runner can predict them and use them in follow-up assertions:
+
+```
+$<interface_ref>_<n>_<callback_typedef>_<arg_name>
+```
+
+- `<interface_ref>`: ref name of the interface object, without the leading `$`
+- `<n>`: ordinal position of this invocation within the current queue batch, counting across all callback types, starting at 1
+- `<callback_typedef>`: exact C typedef name from `bitcoinkernel.h`
+- `<arg_name>`: C parameter name of the object argument
+
+Examples: `$notif_1_btck_NotifyBlockTip_entry`, `$vi_1_btck_ValidationInterfaceBlockChecked_block`, `$vi_2_btck_ValidationInterfaceBlockConnected_entry`.
+
+### Drain
+
+Drain methods (`notification_callbacks_drain`, `validation_callbacks_drain`) are protocol-level methods with no C API counterpart. Each takes an interface ref and flushes the per-interface queue, registering all callback-produced object refs into the shared registry and returning the invocation records in firing order. Both callback families are synchronous — all callbacks triggered during a kernel operation complete before the operation returns — so a drain issued after a kernel operation (e.g. `btck_chainstate_manager_process_block`) will always see the complete set of records for that call. An empty array means no callbacks fired since the last drain.
+
+Callback-produced refs are not available in the registry until drain is called. The runner must call drain before referencing any callback-produced object in a follow-up request.
+
+```json
+// Request
+{"id": "3", "method": "notification_callbacks_drain", "params": {"interface": {"ref": "$notif"}}}
+// Response
+{"id": "3", "result": [{"callback": "btck_NotifyBlockTip", "state": "btck_SynchronizationState_POST_INIT", "entry": {"ref": "$notif_1_btck_NotifyBlockTip_entry"}, "verification_progress": 1.0}]}
+```
+
+### Registry Validity of Callback-Produced Refs
+
+Callback-produced refs enter the shared registry when drain is called and must remain valid for the duration of the suite — suites may reference them in follow-up assertions after the drain. This means the handler must ensure that whatever is stored in the registry under a callback-produced ref stays alive long enough.
+
+For objects the C implementation passes as owned copies, the registered ref holds that copy and must be explicitly destroyed by the suite. For objects the C implementation passes as views (pointers or references into kernel-owned memory), the handler must judge whether the underlying memory will remain valid for the suite's lifetime. If it will (e.g. a `btck_BlockTreeEntry` view remains valid for the chainstate manager's lifetime), registering the view directly is safe and no copy is needed; if it will not — because the view points to a stack-local or other short-lived storage — the handler must copy the object at callback time and register the copy at drain time instead. Copies registered this way are owned refs and must be destroyed by the suite.
 
 ## Test Suites Overview
 
@@ -208,6 +268,11 @@ Test cases where the verification operation fails to determine validity of the s
 **File:** [`chain.json`](../testdata/chain.json)
 
 Sets up blocks, checks chain state, and verifies that the chain tip changes as expected after a reorg scenario.
+
+### Callback Interfaces
+**File:** [`callbacks.json`](../testdata/callbacks.json)
+
+Registers both a notification callbacks interface and a validation interface, wires both into a context, drains init-time invocations after chainstate manager creation, processes a block, drains both interfaces, and asserts on notification entry height, validation mode, and validation entry height.
 
 ## Method Reference
 
