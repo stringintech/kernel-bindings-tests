@@ -95,6 +95,9 @@
             "$ref": "./btck_block_tree_entry_get_block_hash.json"
           },
           {
+            "$ref": "./btck_block_tree_entry_get_height.json"
+          },
+          {
             "$ref": "./btck_chain_contains.json"
           },
           {
@@ -216,6 +219,24 @@
           },
           {
             "$ref": "./btck_txid_to_bytes.json"
+          },
+          {
+            "$ref": "./notification_callbacks_create.json"
+          },
+          {
+            "$ref": "./notification_callbacks_drain.json"
+          },
+          {
+            "$ref": "./validation_interface_callbacks_create.json"
+          },
+          {
+            "$ref": "./validation_callbacks_drain.json"
+          },
+          {
+            "$ref": "./btck_block_validation_state_destroy.json"
+          },
+          {
+            "$ref": "./btck_block_validation_state_get_validation_mode.json"
           }
         ]
       }

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Gets the height of a block tree entry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "btck_block_tree_entry_get_height"
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "block_tree_entry"
+          ],
+          "properties": {
+            "block_tree_entry": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Block tree entry reference"
+            }
+          }
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./btck_block_tree_entry_get_height.response.json"
+    }
+  }
+}
