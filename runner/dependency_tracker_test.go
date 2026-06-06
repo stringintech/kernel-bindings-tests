@@ -108,9 +108,7 @@ func TestDependencyTracker_BuildDependencyChains(t *testing.T) {
 	tracker := NewDependencyTracker()
 
 	for i := range testCases {
-		test := &testCases[i]
-		tracker.BuildDependenciesForTest(i, test)
-		tracker.OnTestExecuted(i, test)
+		tracker.OnTestExecuted(&testCases[i])
 	}
 
 	// Verify dependency chains
@@ -195,9 +193,7 @@ func TestDependencyTracker_StatefulRefs(t *testing.T) {
 	tracker := NewDependencyTracker()
 
 	for i := range testCases {
-		test := &testCases[i]
-		tracker.BuildDependenciesForTest(i, test)
-		tracker.OnTestExecuted(i, test)
+		tracker.OnTestExecuted(&testCases[i])
 	}
 
 	// Verify that context and chainstate_manager refs are marked as stateful
@@ -268,9 +264,7 @@ func TestDependencyTracker_StateMutations(t *testing.T) {
 	tracker := NewDependencyTracker()
 
 	for i := range testCases {
-		test := &testCases[i]
-		tracker.BuildDependenciesForTest(i, test)
-		tracker.OnTestExecuted(i, test)
+		tracker.OnTestExecuted(&testCases[i])
 	}
 
 	// State dependencies should include test3 (process_block) and its dependencies (0, 1, 2)
@@ -344,10 +338,9 @@ func TestDependencyTracker_BuildRequestChain(t *testing.T) {
 
 	tracker := NewDependencyTracker()
 
+	requestChains := make([][]int, len(testCases))
 	for i := range testCases {
-		test := &testCases[i]
-		tracker.BuildDependenciesForTest(i, test)
-		tracker.OnTestExecuted(i, test)
+		requestChains[i] = tracker.OnTestExecuted(&testCases[i])
 	}
 
 	tests := []struct {
@@ -369,9 +362,9 @@ func TestDependencyTracker_BuildRequestChain(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
-			got := tracker.BuildRequestChain(tt.testIdx, testCases)
+			got := requestChains[tt.testIdx]
 			if !slices.Equal(got, tt.wantChain) {
-				t.Errorf("BuildRequestChain(%d) = %v, want %v", tt.testIdx, got, tt.wantChain)
+				t.Errorf("requestChain[%d] = %v, want %v", tt.testIdx, got, tt.wantChain)
 			}
 		})
 	}
