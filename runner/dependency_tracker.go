@@ -22,6 +22,14 @@ var stateMutatingMethods = map[string]bool{
 
 // DependencyTracker manages test dependencies and builds request chains for verbose output.
 // It tracks both explicit ref dependencies and implicit state dependencies.
+//
+// State dependency tracking is intentionally coarse to keep things simple: stateDependencies is a single global
+// list accumulating every state-mutating test across all stateful objects. When building
+// the request chain for a test, if that test depends on any stateful ref (regardless of
+// which object), the entire stateDependencies list is included. This means a mutation on
+// one stateful object (e.g. process_block on $chainman_A) will appear in the chain of a
+// test that only uses a different stateful object (e.g. $chainman_B). This is a known
+// limitation of the current model.
 type DependencyTracker struct {
 	// refCreators maps reference names to the test index that created them
 	refCreators map[string]int
