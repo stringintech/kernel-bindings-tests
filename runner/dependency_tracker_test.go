@@ -51,320 +51,212 @@ func TestExtractRefsFromParams(t *testing.T) {
 	}
 }
 
-func TestDependencyTracker_BuildDependencyChains(t *testing.T) {
-	// Create test cases to verify dependency chain building
-	testsJSON := `[
-		{
-			"request": {
-				"id": "test0",
-				"method": "create_a",
-				"params": {},
-				"ref": "$ref_a"
-			},
-			"expected_response": {"result": {"ref": "$ref_a"}}
-		},
-		{
-			"request": {
-				"id": "test1",
-				"method": "create_b",
-				"params": {"input": {"ref": "$ref_a"}},
-				"ref": "$ref_b"
-			},
-			"expected_response": {"result": {"ref": "$ref_b"}}
-		},
-		{
-			"request": {
-				"id": "test2",
-				"method": "create_c",
-				"params": {},
-				"ref": "$ref_c"
-			},
-			"expected_response": {"result": {"ref": "$ref_c"}}
-		},
-		{
-			"request": {
-				"id": "test3",
-				"method": "use_multiple",
-				"params": {"first": {"ref": "$ref_b"}, "second": {"ref": "$ref_c"}}
-			},
-			"expected_response": {}
-		},
-		{
-			"request": {
-				"id": "test4",
-				"method": "use_array",
-				"params": {"items": [{"ref": "$ref_a"}, {"ref": "$ref_c"}]}
-			},
-			"expected_response": {}
-		}
-	]`
-
-	var testCases []TestCase
-	if err := json.Unmarshal([]byte(testsJSON), &testCases); err != nil {
-		t.Fatalf("failed to unmarshal test cases: %v", err)
+func TestDependencyTracker(t *testing.T) {
+	type entry struct {
+		tc            TestCase
+		expectedChain []int
 	}
 
-	// Create dependency tracker and simulate test execution
-	tracker := NewDependencyTracker()
-
-	for i := range testCases {
-		tracker.OnTestExecuted(&testCases[i])
+	type suite struct {
+		name  string
+		cases []entry
 	}
 
-	// Verify dependency chains
-	tests := []struct {
-		testIdx      int
-		wantDepChain []int
-		description  string
-	}{
+	suites := []suite{
 		{
-			testIdx:      0,
-			wantDepChain: []int{},
-			description:  "test0 has no dependencies",
-		},
-		{
-			testIdx:      1,
-			wantDepChain: []int{0},
-			description:  "test1 depends on test0",
-		},
-		{
-			testIdx:      2,
-			wantDepChain: []int{},
-			description:  "test2 has no dependencies",
-		},
-		{
-			testIdx:      3,
-			wantDepChain: []int{0, 1, 2},
-			description:  "test3 depends on test1 (which depends on test0) and test2",
-		},
-		{
-			testIdx:      4,
-			wantDepChain: []int{0, 2},
-			description:  "test4 depends on test0 and test2 via refs nested in an array param",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.description, func(t *testing.T) {
-			got := tracker.depChains[tt.testIdx]
-			if !slices.Equal(got, tt.wantDepChain) {
-				t.Errorf("depChains[%d] = %v, want %v", tt.testIdx, got, tt.wantDepChain)
-			}
-		})
-	}
-}
-
-func TestDependencyTracker_StatefulRefs(t *testing.T) {
-	testsJSON := `[
-		{
-			"request": {
-				"id": "test0",
-				"method": "btck_context_create",
-				"params": {},
-				"ref": "$context"
+			// ref dependency chains are built from params: a test that uses a ref inherits the
+			// full transitive chain of tests that produced it, including refs passed via arrays
+			name: "ref-chains",
+			cases: []entry{
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "ref-chains#0",
+							Method: "create_a",
+							Params: json.RawMessage(`{}`),
+							Ref:    "$ref_a",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$ref_a"}`)},
+					},
+					expectedChain: []int{},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "ref-chains#1",
+							Method: "create_b",
+							Params: json.RawMessage(`{"input": {"ref": "$ref_a"}}`),
+							Ref:    "$ref_b",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$ref_b"}`)},
+					},
+					expectedChain: []int{0},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "ref-chains#2",
+							Method: "create_c",
+							Params: json.RawMessage(`{}`),
+							Ref:    "$ref_c",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$ref_c"}`)},
+					},
+					expectedChain: []int{},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "ref-chains#3",
+							Method: "use_multiple",
+							Params: json.RawMessage(`{"first": {"ref": "$ref_b"}, "second": {"ref": "$ref_c"}}`),
+						},
+						ExpectedResponse: Response{},
+					},
+					expectedChain: []int{0, 1, 2},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "ref-chains#4",
+							Method: "use_array",
+							Params: json.RawMessage(`{"items": [{"ref": "$ref_a"}, {"ref": "$ref_c"}]}`),
+						},
+						ExpectedResponse: Response{},
+					},
+					expectedChain: []int{0, 2},
+				},
 			},
-			"expected_response": {"result": {"ref": "$context"}}
 		},
 		{
-			"request": {
-				"id": "test1",
-				"method": "btck_chainstate_manager_create",
-				"params": {"context": {"ref": "$context"}},
-				"ref": "$chainman"
+			// stateful kernel objects (context, chainman) cause state mutations to accumulate as
+			// state deps; any later test that uses a stateful ref inherits those deps. state deps
+			// are tracked globally, not per object instance, so a mutation on one chainman bleeds
+			// into unrelated operations on a different chainman created afterwards — a known
+			// documented limitation of the dependency tracker (see state-mutations#7, state-mutations#8)
+			name: "state-mutations",
+			cases: []entry{
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "state-mutations#0",
+							Method: "btck_context_create",
+							Params: json.RawMessage(`{}`),
+							Ref:    "$context",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$context"}`)},
+					},
+					expectedChain: []int{},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "state-mutations#1",
+							Method: "btck_chainstate_manager_create",
+							Params: json.RawMessage(`{"context": {"ref": "$context"}}`),
+							Ref:    "$chainman",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$chainman"}`)},
+					},
+					expectedChain: []int{0},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "state-mutations#2",
+							Method: "btck_block_create",
+							Params: json.RawMessage(`{"raw_block": "deadbeef"}`),
+							Ref:    "$block",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$block"}`)},
+					},
+					expectedChain: []int{},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "state-mutations#3",
+							Method: "btck_chainstate_manager_process_block",
+							Params: json.RawMessage(`{"chainstate_manager": {"ref": "$chainman"}, "block": {"ref": "$block"}}`),
+						},
+						ExpectedResponse: Response{},
+					},
+					expectedChain: []int{0, 1, 2},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "state-mutations#4",
+							Method: "btck_block_create",
+							Params: json.RawMessage(`{"raw_block": "cafebabe"}`),
+							Ref:    "$block2",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$block2"}`)},
+					},
+					expectedChain: []int{},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "state-mutations#5",
+							Method: "btck_chainstate_manager_get_active_chain",
+							Params: json.RawMessage(`{"chainstate_manager": {"ref": "$chainman"}}`),
+							Ref:    "$chain",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$chain"}`)},
+					},
+					expectedChain: []int{0, 1, 2, 3},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "state-mutations#6",
+							Method: "btck_context_create",
+							Params: json.RawMessage(`{}`),
+							Ref:    "$context_b",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$context_b"}`)},
+					},
+					expectedChain: []int{},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "state-mutations#7",
+							Method: "btck_chainstate_manager_create",
+							Params: json.RawMessage(`{"context": {"ref": "$context_b"}}`),
+							Ref:    "$chainman_b",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$chainman_b"}`)},
+					},
+					expectedChain: []int{0, 1, 2, 3, 6},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "state-mutations#8",
+							Method: "btck_chainstate_manager_get_active_chain",
+							Params: json.RawMessage(`{"chainstate_manager": {"ref": "$chainman_b"}}`),
+							Ref:    "$chain_b",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$chain_b"}`)},
+					},
+					expectedChain: []int{0, 1, 2, 3, 6, 7},
+				},
 			},
-			"expected_response": {"result": {"ref": "$chainman"}}
-		},
-		{
-			"request": {
-				"id": "test2",
-				"method": "btck_block_create",
-				"params": {"raw_block": "deadbeef"},
-				"ref": "$block"
-			},
-			"expected_response": {"result": {"ref": "$block"}}
-		}
-	]`
-
-	var testCases []TestCase
-	if err := json.Unmarshal([]byte(testsJSON), &testCases); err != nil {
-		t.Fatalf("failed to unmarshal test cases: %v", err)
-	}
-
-	tracker := NewDependencyTracker()
-
-	for i := range testCases {
-		tracker.OnTestExecuted(&testCases[i])
-	}
-
-	// Verify that context and chainstate_manager refs are marked as stateful
-	if !tracker.statefulRefs["$context"] {
-		t.Error("$context_ref should be marked as stateful")
-	}
-	if !tracker.statefulRefs["$chainman"] {
-		t.Error("$chainman_ref should be marked as stateful")
-	}
-	if tracker.statefulRefs["$block"] {
-		t.Error("$block_ref should NOT be marked as stateful")
-	}
-}
-
-func TestDependencyTracker_StateMutations(t *testing.T) {
-	testsJSON := `[
-		{
-			"request": {
-				"id": "test0",
-				"method": "btck_context_create",
-				"params": {},
-				"ref": "$context"
-			},
-			"expected_response": {"result": {"ref": "$context"}}
-		},
-		{
-			"request": {
-				"id": "test1",
-				"method": "btck_chainstate_manager_create",
-				"params": {"context": {"ref": "$context"}},
-				"ref": "$chainman"
-			},
-			"expected_response": {"result": {"ref": "$chainman"}}
-		},
-		{
-			"request": {
-				"id": "test2",
-				"method": "btck_block_create",
-				"params": {"raw_block": "deadbeef"},
-				"ref": "$block"
-			},
-			"expected_response": {"result": {"ref": "$block"}}
-		},
-		{
-			"request": {
-				"id": "test3",
-				"method": "btck_chainstate_manager_process_block",
-				"params": {"chainstate_manager": {"ref": "$chainman"}, "block": {"ref": "$block"}}
-			},
-			"expected_response": {}
-		},
-		{
-			"request": {
-				"id": "test4",
-				"method": "btck_block_create",
-				"params": {"raw_block": "cafebabe"},
-				"ref": "$block2"
-			},
-			"expected_response": {"result": {"ref": "$block2"}}
-		}
-	]`
-
-	var testCases []TestCase
-	if err := json.Unmarshal([]byte(testsJSON), &testCases); err != nil {
-		t.Fatalf("failed to unmarshal test cases: %v", err)
-	}
-
-	tracker := NewDependencyTracker()
-
-	for i := range testCases {
-		tracker.OnTestExecuted(&testCases[i])
-	}
-
-	// State dependencies should include test3 (process_block) and its dependencies (0, 1, 2)
-	expectedStateDeps := []int{0, 1, 2, 3}
-	if !slices.Equal(tracker.stateDependencies, expectedStateDeps) {
-		t.Errorf("state dependencies = %v, want %v", tracker.stateDependencies, expectedStateDeps)
-	}
-}
-
-func TestDependencyTracker_BuildRequestChain(t *testing.T) {
-	testsJSON := `[
-		{
-			"request": {
-				"id": "test0",
-				"method": "btck_context_create",
-				"params": {},
-				"ref": "$context"
-			},
-			"expected_response": {"result": {"ref": "$context"}}
-		},
-		{
-			"request": {
-				"id": "test1",
-				"method": "btck_chainstate_manager_create",
-				"params": {"context": {"ref": "$context"}},
-				"ref": "$chainman"
-			},
-			"expected_response": {"result": {"ref": "$chainman"}}
-		},
-		{
-			"request": {
-				"id": "test2",
-				"method": "btck_block_create",
-				"params": {"raw_block": "deadbeef"},
-				"ref": "$block"
-			},
-			"expected_response": {"result": {"ref": "$block"}}
-		},
-		{
-			"request": {
-				"id": "test3",
-				"method": "btck_chainstate_manager_process_block",
-				"params": {"chainstate_manager": {"ref": "$chainman"}, "block": {"ref": "$block"}}
-			},
-			"expected_response": {}
-		},
-		{
-			"request": {
-				"id": "test4",
-				"method": "btck_block_create",
-				"params": {"raw_block": "cafebabe"},
-				"ref": "$block2"
-			},
-			"expected_response": {"result": {"ref": "$block2"}}
-		},
-		{
-			"request": {
-				"id": "test5",
-				"method": "btck_chainstate_manager_get_active_chain",
-				"params": {"chainstate_manager": {"ref": "$chainman"}},
-				"ref": "$chain"
-			},
-			"expected_response": {"result": {"ref": "$chain"}}
-		}
-	]`
-
-	var testCases []TestCase
-	if err := json.Unmarshal([]byte(testsJSON), &testCases); err != nil {
-		t.Fatalf("failed to unmarshal test cases: %v", err)
-	}
-
-	tracker := NewDependencyTracker()
-
-	requestChains := make([][]int, len(testCases))
-	for i := range testCases {
-		requestChains[i] = tracker.OnTestExecuted(&testCases[i])
-	}
-
-	tests := []struct {
-		testIdx     int
-		wantChain   []int
-		description string
-	}{
-		{
-			testIdx:     4,
-			wantChain:   []int{}, // block_create doesn't use stateful refs, so no state deps included
-			description: "test4 (block_create) should NOT include state dependencies",
-		},
-		{
-			testIdx:     5,
-			wantChain:   []int{0, 1, 2, 3}, // uses chainman_ref (stateful), so includes state deps
-			description: "test5 (get_active_chain) should include state dependencies",
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.description, func(t *testing.T) {
-			got := requestChains[tt.testIdx]
-			if !slices.Equal(got, tt.wantChain) {
-				t.Errorf("requestChain[%d] = %v, want %v", tt.testIdx, got, tt.wantChain)
+	for _, s := range suites {
+		t.Run(s.name, func(t *testing.T) {
+			tracker := NewDependencyTracker()
+			for _, e := range s.cases {
+				got := tracker.OnTestExecuted(&e.tc)
+				t.Run(e.tc.Request.ID, func(t *testing.T) {
+					if !slices.Equal(got, e.expectedChain) {
+						t.Errorf("chain = %v, want %v", got, e.expectedChain)
+					}
+				})
 			}
 		})
 	}
