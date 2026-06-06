@@ -51,6 +51,46 @@ func TestExtractRefsFromParams(t *testing.T) {
 	}
 }
 
+func TestExtractRefsFromResult(t *testing.T) {
+	tests := []struct {
+		description string
+		result      string
+		wantRefs    []string
+	}{
+		{
+			description: "single ref object — normal create method result",
+			result:      `{"ref": "$ctx"}`,
+			wantRefs:    []string{"$ctx"},
+		},
+		{
+			description: "array of objects with nested refs — drain result",
+			result:      `[{"callback": "btck_NotifyBlockTip", "entry": {"ref": "$notif_1_btck_NotifyBlockTip_entry"}}, {"callback": "btck_NotifyBlockTip", "entry": {"ref": "$notif_2_btck_NotifyBlockTip_entry"}}]`,
+			wantRefs:    []string{"$notif_1_btck_NotifyBlockTip_entry", "$notif_2_btck_NotifyBlockTip_entry"},
+		},
+		{
+			description: "primitive result produces no refs",
+			result:      `42`,
+			wantRefs:    nil,
+		},
+		{
+			description: "null result produces no refs",
+			result:      `null`,
+			wantRefs:    nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			got := extractRefsFromResult(Result(tt.result))
+			slices.Sort(got)
+			slices.Sort(tt.wantRefs)
+			if !slices.Equal(got, tt.wantRefs) {
+				t.Errorf("extractRefsFromResult(%s) = %v, want %v", tt.result, got, tt.wantRefs)
+			}
+		})
+	}
+}
+
 func TestDependencyTracker(t *testing.T) {
 	type entry struct {
 		tc            TestCase

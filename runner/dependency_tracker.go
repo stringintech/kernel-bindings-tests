@@ -71,11 +71,13 @@ func (dt *DependencyTracker) OnTestExecuted(test *TestCase) []int {
 
 	requestChain := dt.buildRequestChain(i, test.Request.ID, refs)
 
-	// Track ref creation using the request's ref field.
-	if test.Request.Ref != "" {
-		dt.refCreators[test.Request.Ref] = i
-		if statefulCreatorMethods[test.Request.Method] {
-			dt.statefulRefs[test.Request.Ref] = true
+	// Track all refs produced by this test by scanning the result.
+	for _, ref := range extractRefsFromResult(test.ExpectedResponse.Result) {
+		if _, alreadyKnown := dt.refCreators[ref]; !alreadyKnown {
+			dt.refCreators[ref] = i
+			if statefulCreatorMethods[test.Request.Method] {
+				dt.statefulRefs[ref] = true
+			}
 		}
 	}
 
@@ -130,6 +132,41 @@ func (dt *DependencyTracker) computeUsesStatefulRefs(i int, refs []string) bool 
 	}
 	dt.usesStatefulRefs[i] = result
 	return result
+}
+
+// extractRefsFromResult walks a Result value and returns every {"ref": "..."} string found.
+func extractRefsFromResult(result Result) []string {
+	if result.IsNullOrOmitted() {
+		return nil
+	}
+	data := json.RawMessage(result)
+
+	// single ref object — normal create method result
+	if ref, ok := ParseRefObject(data); ok {
+		return []string{ref}
+	}
+
+	// array — recurse into each element
+	var arr []json.RawMessage
+	if err := json.Unmarshal(data, &arr); err == nil {
+		var refs []string
+		for _, elem := range arr {
+			refs = append(refs, extractRefsFromResult(Result(elem))...)
+		}
+		return refs
+	}
+
+	// object — recurse into each value
+	var obj map[string]json.RawMessage
+	if err := json.Unmarshal(data, &obj); err == nil {
+		var refs []string
+		for _, v := range obj {
+			refs = append(refs, extractRefsFromResult(Result(v))...)
+		}
+		return refs
+	}
+
+	return nil
 }
 
 // extractRefsFromParams extracts all reference names from params JSON.
