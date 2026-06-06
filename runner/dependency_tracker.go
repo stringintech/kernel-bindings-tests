@@ -22,6 +22,14 @@ var stateMutatingMethods = map[string]bool{
 
 // DependencyTracker manages test dependencies and builds request chains for verbose output.
 // It tracks both explicit ref dependencies and implicit state dependencies.
+//
+// State dependency tracking is intentionally coarse to keep things simple: stateDependencies is a single global
+// list accumulating every state-mutating test across all stateful objects. When building
+// the request chain for a test, if that test depends on any stateful ref (regardless of
+// which object), the entire stateDependencies list is included. This means a mutation on
+// one stateful object (e.g. process_block on $chainman_A) will appear in the chain of a
+// test that only uses a different stateful object (e.g. $chainman_B). This is a known
+// limitation of the current model.
 type DependencyTracker struct {
 	// refCreators maps reference names to the test index that created them
 	refCreators map[string]int
@@ -36,6 +44,12 @@ type DependencyTracker struct {
 	// stateDependencies is a cumulative list of all tests affecting state (state-mutating
 	// tests and their complete dependency chains)
 	stateDependencies []int
+
+	// usesStatefulRefs caches whether each test (by index) or any test it transitively depends on uses a stateful ref
+	usesStatefulRefs map[int]bool
+
+	// processedTestsCount is the number of tests processed so far, used to assign sequential indices
+	processedTestsCount int
 }
 
 // NewDependencyTracker creates a new dependency tracker
@@ -45,83 +59,77 @@ func NewDependencyTracker() *DependencyTracker {
 		statefulRefs:      make(map[string]bool),
 		depChains:         make(map[int][]int),
 		stateDependencies: []int{},
+		usesStatefulRefs:  make(map[int]bool),
 	}
 }
 
-// BuildDependenciesForTest analyzes a test's parameters to build its complete transitive
-// dependency chain. When a test uses refs created by earlier tests, this records all direct
-// dependencies (tests that created those refs) and indirect dependencies (their dependencies).
-// Must be called after all previous tests have been processed.
-func (dt *DependencyTracker) BuildDependenciesForTest(testIndex int, test *TestCase) {
-	// Build dependency chain for current test based on refs it uses
-	var parentChains [][]int
-	for _, ref := range extractRefsFromParams(test.Request.Params) {
-		if creatorIdx, exists := dt.refCreators[ref]; exists {
-			// Add the creator as a direct dependency
-			parentChains = append(parentChains, []int{creatorIdx})
-			// Add transitive dependencies (creator's dependencies)
-			if chain, hasChain := dt.depChains[creatorIdx]; hasChain {
-				parentChains = append(parentChains, chain)
-			}
-		} else {
-			panic(fmt.Sprintf("test %d (%s) uses undefined reference %s - no prior test created this ref",
-				testIndex, test.Request.ID, ref))
-		}
-	}
-	dt.depChains[testIndex] = mergeSortedUnique(parentChains...)
-}
+// OnTestExecuted is called after a test executes. It computes and returns the request chain
+// for the test, then updates internal state so subsequent tests see this test's refs and mutations.
+func (dt *DependencyTracker) OnTestExecuted(test *TestCase) []int {
+	i := dt.processedTestsCount
+	refs := extractRefsFromParams(test.Request.Params)
 
-// OnTestExecuted is called after a test executes successfully. It tracks the ref
-// created by the test, marks it as stateful if needed, and updates state dependencies
-// for state-mutating methods.
-func (dt *DependencyTracker) OnTestExecuted(testIndex int, test *TestCase) {
-	// Track ref creation using the request's ref field
+	requestChain := dt.buildRequestChain(i, test.Request.ID, refs)
+
+	// Track ref creation using the request's ref field.
 	if test.Request.Ref != "" {
-		dt.refCreators[test.Request.Ref] = testIndex
-
-		// Mark refs from stateful methods
+		dt.refCreators[test.Request.Ref] = i
 		if statefulCreatorMethods[test.Request.Method] {
 			dt.statefulRefs[test.Request.Ref] = true
 		}
 	}
 
-	// Track state-mutating tests and their dependencies
+	// Track state mutations so future tests that touch stateful objects include this test in their chain.
 	if stateMutatingMethods[test.Request.Method] {
-		mutatorChain := append(dt.depChains[testIndex], testIndex)
+		mutatorChain := append(dt.depChains[i], i)
 		dt.stateDependencies = mergeSortedUnique(dt.stateDependencies, mutatorChain)
 	}
+
+	dt.processedTestsCount++
+	return requestChain
 }
 
-// BuildRequestChain builds the complete dependency chain for a test
-func (dt *DependencyTracker) BuildRequestChain(testIndex int, allTests []TestCase) []int {
-	refDepChain := dt.depChains[testIndex]
-
-	// Only include state dependencies if the test's dep chain contains any stateful refs
-	if dt.testUsesStatefulRefs(testIndex, allTests) {
-		return mergeSortedUnique(refDepChain, dt.stateDependencies)
+func (dt *DependencyTracker) buildRequestChain(i int, testID string, refs []string) []int {
+	var parentChains [][]int
+	for _, ref := range refs {
+		if creatorIdx, exists := dt.refCreators[ref]; exists {
+			parentChains = append(parentChains, []int{creatorIdx})
+			if chain, hasChain := dt.depChains[creatorIdx]; hasChain {
+				parentChains = append(parentChains, chain)
+			}
+		} else {
+			panic(fmt.Sprintf("test %s uses undefined reference %s - no prior test created this ref",
+				testID, ref))
+		}
 	}
+	dt.depChains[i] = mergeSortedUnique(parentChains...)
 
-	return refDepChain
+	if dt.computeUsesStatefulRefs(i, refs) {
+		return mergeSortedUnique(dt.depChains[i], dt.stateDependencies)
+	}
+	return dt.depChains[i]
 }
 
-// testUsesStatefulRefs checks if a test's dependency chain includes any stateful refs
-func (dt *DependencyTracker) testUsesStatefulRefs(testIndex int, allTests []TestCase) bool {
-	// Check all tests in the dependency chain
-	for _, depIdx := range dt.depChains[testIndex] {
-		for _, ref := range extractRefsFromParams(allTests[depIdx].Request.Params) {
-			if dt.statefulRefs[ref] {
-				return true
+// computeUsesStatefulRefs computes and caches whether test i (or any test it depends on)
+// uses a stateful ref. deps must already be cached for all indices in depChains[i].
+func (dt *DependencyTracker) computeUsesStatefulRefs(i int, refs []string) bool {
+	result := false
+	for _, ref := range refs {
+		if dt.statefulRefs[ref] {
+			result = true
+			break
+		}
+	}
+	if !result {
+		for _, depIdx := range dt.depChains[i] {
+			if dt.usesStatefulRefs[depIdx] {
+				result = true
+				break
 			}
 		}
 	}
-
-	// Check the test itself
-	for _, ref := range extractRefsFromParams(allTests[testIndex].Request.Params) {
-		if dt.statefulRefs[ref] {
-			return true
-		}
-	}
-	return false
+	dt.usesStatefulRefs[i] = result
+	return result
 }
 
 // extractRefsFromParams extracts all reference names from params JSON.

@@ -144,27 +144,20 @@ func (tr *TestRunner) RunTestSuite(ctx context.Context, suite TestSuite, verbosi
 				Message: "Skipped due to previous test failure in stateful suite",
 			}
 		} else {
-			// Build dependency chain by analyzing which refs this test uses
-			if verbosity != VerbosityQuiet {
-				depTracker.BuildDependenciesForTest(i, test)
-			}
-
 			// Execute the test against the handler
 			testResult = tr.runTest(ctx, test)
 
-			// Add verbose output if requested or on failure
-			if (verbosity == VerbosityAlways) || (verbosity == VerbosityOnFailure && !testResult.Passed) {
-				requestChain := depTracker.BuildRequestChain(i, suite.Tests)
-				verboseOutput := formatVerboseOutput(suite.Tests, i, requestChain, &testResult)
-				if testResult.Message != "" {
-					testResult.Message = fmt.Sprintf("%s\n%s", testResult.Message, verboseOutput)
-				} else {
-					testResult.Message = verboseOutput
-				}
-			}
-
+			// Track dependencies and add verbose output if requested or on failure
 			if verbosity != VerbosityQuiet {
-				depTracker.OnTestExecuted(i, test)
+				requestChain := depTracker.OnTestExecuted(test)
+				if (verbosity == VerbosityAlways) || (verbosity == VerbosityOnFailure && !testResult.Passed) {
+					verboseOutput := formatVerboseOutput(suite.Tests, i, requestChain, &testResult)
+					if testResult.Message != "" {
+						testResult.Message = fmt.Sprintf("%s\n%s", testResult.Message, verboseOutput)
+					} else {
+						testResult.Message = verboseOutput
+					}
+				}
 			}
 		}
 
