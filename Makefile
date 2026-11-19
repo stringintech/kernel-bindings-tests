@@ -20,9 +20,9 @@ mock-handler:
 
 test: build
 	@echo "Running runner unit tests..."
-	go test -v ./runner/...
+	go test ./runner/...
 	@echo "Running conformance tests with mock handler..."
-	$(RUNNER_BIN) --handler $(MOCK_HANDLER_BIN) -vv
+	$(RUNNER_BIN) --handler $(MOCK_HANDLER_BIN)
 
 suite-validate:
 	@echo "Validating testdata against the suite schema..."
