@@ -32,8 +32,8 @@
           "additionalProperties": false,
           "properties": {
             "raw_block_header": {
-              "type": "string",
-              "description": "Hex-encoded raw block header data. At least 80 bytes are required; if additional bytes are provided, only the first 80 bytes are used to create the header."
+              "$ref": "./shared.json#/$defs/Hex160String",
+              "description": "Hex-encoded raw block header data. Must be exactly 80 bytes."
             }
           },
           "required": [

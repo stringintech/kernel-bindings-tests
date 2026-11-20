@@ -2,8 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "oneOf": [
     {
-      "$ref": "./shared.json#/$defs/HexStringResponse",
-      "description": "Hex-encoded consensus serialization of the block header"
+      "$ref": "./shared.json#/$defs/Hex160StringResponse",
+      "description": "Hex-encoded 80-byte consensus serialization of the block header"
     },
     {
       "$ref": "./shared.json#/$defs/GenericErrorResponse"

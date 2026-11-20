@@ -69,6 +69,19 @@
         "error": { "type": "null" }
       }
     },
+    "Hex160String": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{160}$"
+    },
+    "Hex160StringResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result"],
+      "properties": {
+        "result": { "$ref": "#/$defs/Hex160String" },
+        "error": { "type": "null" }
+      }
+    },
     "HexString": {
       "type": "string",
       "pattern": "^[0-9a-f]*$"

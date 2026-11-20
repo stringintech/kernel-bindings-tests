@@ -37,6 +37,7 @@ const (
 	kindIntegerResponse      = "integer-response"
 	kindHexStringResponse    = "hex-string-response"
 	kindHex64StringResponse  = "hex64-string-response"
+	kindHex160StringResponse = "hex160-string-response"
 )
 
 // GenerateMethodReference builds method reference markdown from method schemas in schemaDir.
@@ -487,7 +488,7 @@ func responseTypeLabel(schema *jsonschema.Schema) string {
 		return "Boolean"
 	case kindIntegerResponse:
 		return "Integer"
-	case kindHexStringResponse, kindHex64StringResponse:
+	case kindHexStringResponse, kindHex64StringResponse, kindHex160StringResponse:
 		return "String"
 	default:
 		return ""
@@ -588,6 +589,8 @@ func schemaKind(schema *jsonschema.Schema) string {
 		return kindHexStringResponse
 	case strings.Contains(loc, "#/$defs/Hex64StringResponse"):
 		return kindHex64StringResponse
+	case strings.Contains(loc, "#/$defs/Hex160StringResponse"):
+		return kindHex160StringResponse
 	default:
 		return ""
 	}

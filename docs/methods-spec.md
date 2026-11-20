@@ -180,11 +180,11 @@ Copies a block header.
 Creates a block header object from raw serialized header data.
 
 **Parameters:**
-- `raw_block_header` (string, required): Hex-encoded raw block header data. At least 80 bytes are required; if additional bytes are provided, only the first 80 bytes are used to create the header.
+- `raw_block_header` (string, required): Hex-encoded raw block header data. Must be exactly 80 bytes.
 
 **Result:** Reference - Contains the created block header (e.g., `{"ref": "$header"}`)
 
-**Error:** `{}` if fewer than 80 bytes are provided for the serialized block header
+**Error:** `{}` when operation fails
 
 ---
 
@@ -286,7 +286,7 @@ Returns the consensus-serialized block header as a hex string.
 **Parameters:**
 - `header` (reference, required): Block header reference
 
-**Result:** String - Hex-encoded consensus serialization of the block header
+**Result:** String - Hex-encoded 80-byte consensus serialization of the block header
 
 **Error:** `{}` when operation fails
 

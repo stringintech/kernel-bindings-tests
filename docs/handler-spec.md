@@ -138,7 +138,7 @@ Builds transaction output objects from a script pubkey and amount, verifies amou
 #### Block Header Operations
 **File:** [`block_header.json`](../testdata/block_header.json)
 
-Parses raw block headers, rejects short inputs, verifies serialization, field getters, and exercises copy and destroy behavior.
+Parses raw block headers, verifies serialization, field getters, and exercises copy and destroy behavior.
 
 #### Block Operations
 **File:** [`block.json`](../testdata/block.json)
