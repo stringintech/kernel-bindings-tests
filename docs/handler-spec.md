@@ -81,7 +81,7 @@ Many operations return objects (contexts, blocks, chains, etc.) that must persis
 // Request
 {"id": "1", "method": "btck_context_create", "params": {...}, "ref": "$ctx1"}
 // Response
-{"id": "1", "result": {"ref": "$ctx1"}, "error": null}
+{"id": "1", "result": {"ref": "$ctx1"}}
 // Handler action: registry["$ctx1"] = created_context_ptr
 ```
 
@@ -91,11 +91,67 @@ Many operations return objects (contexts, blocks, chains, etc.) that must persis
 // Request
 {"id": "2", "method": "btck_chainstate_manager_create", "params": {"context": {"ref": "$ctx1"}}, "ref": "$csm1"}
 // Response
-{"id": "2", "result": {"ref": "$csm1"}, "error": null}
+{"id": "2", "result": {"ref": "$csm1"}}
 // Handler action: Extract ref from params.context, look up registry["$ctx1"], create manager, store as registry["$csm1"]
 ```
 
 **Implementation**: Handlers must maintain a registry (map of reference names to object pointers) throughout their lifetime. Objects remain alive until explicitly destroyed or handler exit.
+
+## Callback Interfaces
+
+Some kernel operations trigger callbacks — notification events and validation interface events — that fire synchronously during the operation. The protocol requires handlers to implement two callback interfaces as queueing objects: each maintains an internal invocation queue, records every callback firing into it, and exposes that queue via a drain method. This gives the runner a way to assert which callbacks fired, in what order, and what values they carried.
+
+### Creation and Wiring
+
+Callback interface objects are binding-level objects — not direct C kernel API handles, but wired into the kernel at context creation time. The protocol introduces dedicated methods for creating them — `notification_callbacks_create` and `validation_interface_callbacks_create` — deliberately omitting the `btck_` prefix to make clear they have no direct C API counterpart. They follow the same ref/registry pattern as kernel objects. Interface refs are passed as optional params to `btck_context_create` to wire them in:
+
+The `callbacks` param is required and must list at least one callback name. The interface only queues invocations for the listed callbacks; any unlisted callback fires at the C level but is silently discarded.
+
+```json
+// Request
+{"id": "1", "method": "notification_callbacks_create", "params": {"callbacks": ["btck_NotifyBlockTip"]}, "ref": "$notif"}
+// Response
+{"id": "1", "result": {"ref": "$notif"}}
+
+// Request
+{"id": "2", "method": "btck_context_create", "params": {"chain_parameters": {...}, "notifications": {"ref": "$notif"}}, "ref": "$ctx"}
+// Response
+{"id": "2", "result": {"ref": "$ctx"}}
+```
+
+Neither interface has a matching destroy method. Both are cleaned up implicitly when the chainstate manager associated with the wired context is destroyed.
+
+### Invocation Recording
+
+When a callback fires, the interface implementation must, before the callback returns, append an invocation record to its queue, preserving firing order. The record identifies the callback that fired and carries its arguments, which may be primitives (e.g. an enum like `btck_SynchronizationState`, or a number like `verification_progress`) or objects (e.g. a `btck_BlockTreeEntry`). At this point object arguments sit on the queue and are not yet directly referenceable by the runner — they only become referenceable later, when [drain](#drain) registers them in the registry.
+
+What the record carries for each object argument depends on how the kernel passes it. For arguments the kernel passes as owned copies, carry the copy directly. For arguments passed as views (pointers or references into kernel-owned memory), the handler must judge whether the underlying memory will remain valid long enough — at least until the last request that may reference this ref: if it will (e.g. a `btck_BlockTreeEntry` view that remains valid for the chainstate manager's lifetime), carry the view directly; if it will not — because the view points to a stack-local or other short-lived storage — copy the object before the callback returns and carry the copy instead. This decision is made at callback time; drain has no visibility into argument lifetimes.
+
+### Drain
+
+Drain is what gives the runner access to the queued invocations: the firing order, each callback's primitive argument values, and a way to reference its object arguments in follow-up requests. The drain methods (`notification_callbacks_drain`, `validation_callbacks_drain`) are protocol-level methods with no C API counterpart. Each takes an interface ref, registers every queued object under a deterministic ref name, flushes the queue, and returns the invocation records in firing order with each object argument resolved to `{"ref": "<ref-name>"}`. Until drain is called, callback-produced refs are not in the registry, so the runner must call drain before referencing any callback-produced object in a follow-up request.
+
+The registered ref name must follow this pattern, so the runner can predict it and use it in follow-up assertions (computing it at callback time is often more straightforward, but the spec only requires that the object end up registered under this name on drain):
+
+```
+$<interface_ref>_<n>_<callback_typedef>_<arg_name>
+```
+
+- `<interface_ref>`: ref name of the interface object, without the leading `$`
+- `<n>`: ordinal position of this invocation in the queue since the last drain, counting across all callback types, starting at 1
+- `<callback_typedef>`: exact C typedef name from `bitcoinkernel.h`
+- `<arg_name>`: C parameter name of the object argument
+
+Examples: `$notif_1_btck_NotifyBlockTip_entry`, `$vi_1_btck_ValidationInterfaceBlockChecked_block`, `$vi_2_btck_ValidationInterfaceBlockConnected_entry`.
+
+Both callback families are synchronous — all callbacks triggered during a kernel operation complete before the operation returns — so a drain issued after a kernel operation (e.g. `btck_chainstate_manager_process_block`) will always see the complete set of records for that call. An empty array means no callbacks fired since the last drain.
+
+```json
+// Request
+{"id": "3", "method": "notification_callbacks_drain", "params": {"interface": {"ref": "$notif"}}}
+// Response
+{"id": "3", "result": [{"callback": "btck_NotifyBlockTip", "state": "btck_SynchronizationState_POST_INIT", "entry": {"ref": "$notif_1_btck_NotifyBlockTip_entry"}, "verification_progress": 1.0}]}
+```
 
 ## Test Suites Overview
 
@@ -208,6 +264,11 @@ Test cases where the verification operation fails to determine validity of the s
 **File:** [`chain.json`](../testdata/chain.json)
 
 Sets up blocks, checks chain state, and verifies that the chain tip changes as expected after a reorg scenario.
+
+### Callback Interfaces
+**File:** [`callbacks.json`](../testdata/callbacks.json)
+
+Registers both a notification callbacks interface and a validation interface, wires both into a context, drains init-time invocations after chainstate manager creation, processes a block, drains both interfaces, and asserts on notification entry height, validation mode, and validation entry height.
 
 ## Method Reference
 

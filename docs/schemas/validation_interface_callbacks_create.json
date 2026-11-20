@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Creates a validation interface",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params",
+        "ref"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "validation_interface_callbacks_create"
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["callbacks"],
+          "properties": {
+            "callbacks": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "btck_ValidationInterfaceBlockChecked",
+                  "btck_ValidationInterfacePoWValidBlock",
+                  "btck_ValidationInterfaceBlockConnected",
+                  "btck_ValidationInterfaceBlockDisconnected"
+                ]
+              }
+            }
+          }
+        },
+        "ref": {
+          "$ref": "./shared.json#/$defs/RefString"
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./validation_interface_callbacks_create.response.json"
+    }
+  }
+}

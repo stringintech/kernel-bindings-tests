@@ -1,0 +1,336 @@
+{
+  "title": "Callback Interfaces",
+  "description": "Registers notification and validation interfaces, wires both into a context, drains init-time invocations after chainstate manager creation, processes a block, drains both interfaces, and asserts on validation mode and entry height",
+  "stateful": true,
+  "tests": [
+    {
+      "description": "Creates a notification callbacks interface enabled for btck_NotifyHeaderTip",
+      "request": {
+        "id": "callbacks#1",
+        "method": "notification_callbacks_create",
+        "params": {
+          "callbacks": [
+            "btck_NotifyHeaderTip"
+          ]
+        },
+        "ref": "$notif"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$notif"
+        }
+      }
+    },
+    {
+      "description": "Creates a validation interface enabled for BlockChecked and BlockConnected",
+      "request": {
+        "id": "callbacks#2",
+        "method": "validation_interface_callbacks_create",
+        "params": {
+          "callbacks": [
+            "btck_ValidationInterfaceBlockChecked",
+            "btck_ValidationInterfaceBlockConnected"
+          ]
+        },
+        "ref": "$vi"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$vi"
+        }
+      }
+    },
+    {
+      "description": "Creates a context with regtest chain parameters and both callback interfaces",
+      "request": {
+        "id": "callbacks#3",
+        "method": "btck_context_create",
+        "params": {
+          "chain_parameters": {
+            "chain_type": "btck_ChainType_REGTEST"
+          },
+          "notifications": {
+            "ref": "$notif"
+          },
+          "validation_interface": {
+            "ref": "$vi"
+          }
+        },
+        "ref": "$ctx"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$ctx"
+        }
+      }
+    },
+    {
+      "description": "Creates a chainstate manager from the context",
+      "request": {
+        "id": "callbacks#4",
+        "method": "btck_chainstate_manager_create",
+        "params": {
+          "context": {
+            "ref": "$ctx"
+          }
+        },
+        "ref": "$csm"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$csm"
+        }
+      }
+    },
+    {
+      "description": "Destroys the context after creating the chainstate manager",
+      "request": {
+        "id": "callbacks#5",
+        "method": "btck_context_destroy",
+        "params": {
+          "context": {
+            "ref": "$ctx"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Drains init-time notification callbacks, asserting none fired for enabled callbacks",
+      "request": {
+        "id": "callbacks#6",
+        "method": "notification_callbacks_drain",
+        "params": {
+          "interface": {
+            "ref": "$notif"
+          }
+        }
+      },
+      "expected_response": {
+        "result": []
+      }
+    },
+    {
+      "description": "Drains init-time validation callbacks fired for genesis during chainstate manager creation",
+      "request": {
+        "id": "callbacks#7",
+        "method": "validation_callbacks_drain",
+        "params": {
+          "interface": {
+            "ref": "$vi"
+          }
+        }
+      },
+      "expected_response": {
+        "result": [
+          {
+            "callback": "btck_ValidationInterfaceBlockChecked",
+            "block": {
+              "ref": "$vi_1_btck_ValidationInterfaceBlockChecked_block"
+            },
+            "state": {
+              "ref": "$vi_1_btck_ValidationInterfaceBlockChecked_state"
+            }
+          },
+          {
+            "callback": "btck_ValidationInterfaceBlockConnected",
+            "block": {
+              "ref": "$vi_2_btck_ValidationInterfaceBlockConnected_block"
+            },
+            "entry": {
+              "ref": "$vi_2_btck_ValidationInterfaceBlockConnected_entry"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "description": "Creates block 1 from raw bytes",
+      "request": {
+        "id": "callbacks#8",
+        "method": "btck_block_create",
+        "params": {
+          "raw_block": "0000002006226e46111a0b59caaf126043eb5bbf28c34f3a5e332a1fc7b2b73cf188910f35b99ed4e2e165de2ad77f1bba48049358c9bb740445f3c83ebdb3e83aa5bca8dbe5494dffff7f200000000001020000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff025100feffffff0200f2052a010000001976a9142b4569203694fc997e13f2c0a1383b9e16c77a0d88ac0000000000000000266a24aa21a9ede2f61c3f71d1defd3fa999dfa36953755c690689799962b48bebd836974e8cf90120000000000000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "ref": "$block_1"
+      },
+      "expected_response": {
+        "result": {
+          "ref": "$block_1"
+        }
+      }
+    },
+    {
+      "description": "Processes block 1",
+      "request": {
+        "id": "callbacks#9",
+        "method": "btck_chainstate_manager_process_block",
+        "params": {
+          "chainstate_manager": {
+            "ref": "$csm"
+          },
+          "block": {
+            "ref": "$block_1"
+          }
+        }
+      },
+      "expected_response": {
+        "result": {
+          "new_block": true
+        }
+      }
+    },
+    {
+      "description": "Drains notification callbacks fired by process_block, asserting btck_NotifyHeaderTip for block 1",
+      "request": {
+        "id": "callbacks#10",
+        "method": "notification_callbacks_drain",
+        "params": {
+          "interface": {
+            "ref": "$notif"
+          }
+        }
+      },
+      "expected_response": {
+        "result": [
+          {
+            "callback": "btck_NotifyHeaderTip",
+            "state": "btck_SynchronizationState_INIT_DOWNLOAD",
+            "height": 1,
+            "timestamp": 1296688603,
+            "presync": false
+          }
+        ]
+      }
+    },
+    {
+      "description": "Drains validation callbacks fired by process_block, asserting BlockChecked then BlockConnected for block 1",
+      "request": {
+        "id": "callbacks#11",
+        "method": "validation_callbacks_drain",
+        "params": {
+          "interface": {
+            "ref": "$vi"
+          }
+        }
+      },
+      "expected_response": {
+        "result": [
+          {
+            "callback": "btck_ValidationInterfaceBlockChecked",
+            "block": {
+              "ref": "$vi_1_btck_ValidationInterfaceBlockChecked_block"
+            },
+            "state": {
+              "ref": "$vi_1_btck_ValidationInterfaceBlockChecked_state"
+            }
+          },
+          {
+            "callback": "btck_ValidationInterfaceBlockConnected",
+            "block": {
+              "ref": "$vi_2_btck_ValidationInterfaceBlockConnected_block"
+            },
+            "entry": {
+              "ref": "$vi_2_btck_ValidationInterfaceBlockConnected_entry"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "description": "Asserts validation mode is valid on the block 1 BlockChecked state",
+      "request": {
+        "id": "callbacks#12",
+        "method": "btck_block_validation_state_get_validation_mode",
+        "params": {
+          "state": {
+            "ref": "$vi_1_btck_ValidationInterfaceBlockChecked_state"
+          }
+        }
+      },
+      "expected_response": {
+        "result": "btck_ValidationMode_VALID"
+      }
+    },
+    {
+      "description": "Asserts height 1 on the block 1 BlockConnected entry",
+      "request": {
+        "id": "callbacks#13",
+        "method": "btck_block_tree_entry_get_height",
+        "params": {
+          "block_tree_entry": {
+            "ref": "$vi_2_btck_ValidationInterfaceBlockConnected_entry"
+          }
+        }
+      },
+      "expected_response": {
+        "result": 1
+      }
+    },
+    {
+      "description": "Destroys the block 1 BlockChecked state",
+      "request": {
+        "id": "callbacks#14",
+        "method": "btck_block_validation_state_destroy",
+        "params": {
+          "state": {
+            "ref": "$vi_1_btck_ValidationInterfaceBlockChecked_state"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Destroys the block 1 BlockChecked block",
+      "request": {
+        "id": "callbacks#15",
+        "method": "btck_block_destroy",
+        "params": {
+          "block": {
+            "ref": "$vi_1_btck_ValidationInterfaceBlockChecked_block"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Destroys the block 1 BlockConnected block",
+      "request": {
+        "id": "callbacks#16",
+        "method": "btck_block_destroy",
+        "params": {
+          "block": {
+            "ref": "$vi_2_btck_ValidationInterfaceBlockConnected_block"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Destroys block 1",
+      "request": {
+        "id": "callbacks#17",
+        "method": "btck_block_destroy",
+        "params": {
+          "block": {
+            "ref": "$block_1"
+          }
+        }
+      },
+      "expected_response": {}
+    },
+    {
+      "description": "Destroys the chainstate manager",
+      "request": {
+        "id": "callbacks#18",
+        "method": "btck_chainstate_manager_destroy",
+        "params": {
+          "chainstate_manager": {
+            "ref": "$csm"
+          }
+        }
+      },
+      "expected_response": {}
+    }
+  ]
+}

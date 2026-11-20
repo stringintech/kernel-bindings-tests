@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Validation mode of the block validation state",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["result"],
+  "properties": {
+    "result": {
+      "enum": [
+        "btck_ValidationMode_VALID",
+        "btck_ValidationMode_INVALID",
+        "btck_ValidationMode_INTERNAL_ERROR"
+      ]
+    },
+    "error": { "type": "null" }
+  }
+}

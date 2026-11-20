@@ -51,6 +51,46 @@ func TestExtractRefsFromParams(t *testing.T) {
 	}
 }
 
+func TestExtractRefsFromResult(t *testing.T) {
+	tests := []struct {
+		description string
+		result      string
+		wantRefs    []string
+	}{
+		{
+			description: "single ref object — normal create method result",
+			result:      `{"ref": "$ctx"}`,
+			wantRefs:    []string{"$ctx"},
+		},
+		{
+			description: "array of objects with nested refs — drain result",
+			result:      `[{"callback": "btck_NotifyBlockTip", "entry": {"ref": "$notif_1_btck_NotifyBlockTip_entry"}}, {"callback": "btck_NotifyBlockTip", "entry": {"ref": "$notif_2_btck_NotifyBlockTip_entry"}}]`,
+			wantRefs:    []string{"$notif_1_btck_NotifyBlockTip_entry", "$notif_2_btck_NotifyBlockTip_entry"},
+		},
+		{
+			description: "primitive result produces no refs",
+			result:      `42`,
+			wantRefs:    nil,
+		},
+		{
+			description: "null result produces no refs",
+			result:      `null`,
+			wantRefs:    nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			got := extractRefsFromResult(Result(tt.result))
+			slices.Sort(got)
+			slices.Sort(tt.wantRefs)
+			if !slices.Equal(got, tt.wantRefs) {
+				t.Errorf("extractRefsFromResult(%s) = %v, want %v", tt.result, got, tt.wantRefs)
+			}
+		})
+	}
+}
+
 func TestDependencyTracker(t *testing.T) {
 	type entry struct {
 		tc            TestCase
@@ -242,6 +282,94 @@ func TestDependencyTracker(t *testing.T) {
 						ExpectedResponse: Response{Result: Result(`{"ref": "$chain_b"}`)},
 					},
 					expectedChain: []int{0, 1, 2, 3, 6, 7},
+				},
+			},
+		},
+		{
+			// tests callback interface dependency tracking: refs produced in a drain
+			// response are stateful, so tests using them inherit all prior state dependencies
+			name: "callbacks",
+			cases: []entry{
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "callbacks#0",
+							Method: "notification_callbacks_create",
+							Params: json.RawMessage(`{"callbacks": ["btck_NotifyBlockTip"]}`),
+							Ref:    "$notif",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$notif"}`)},
+					},
+					expectedChain: []int{},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "callbacks#1",
+							Method: "btck_context_create",
+							Params: json.RawMessage(`{"notifications": {"ref": "$notif"}}`),
+							Ref:    "$context",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$context"}`)},
+					},
+					expectedChain: []int{0},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "callbacks#2",
+							Method: "btck_chainstate_manager_create",
+							Params: json.RawMessage(`{"context": {"ref": "$context"}}`),
+							Ref:    "$chainman",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$chainman"}`)},
+					},
+					expectedChain: []int{0, 1},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "callbacks#3",
+							Method: "btck_block_create",
+							Params: json.RawMessage(`{"raw_block": "deadbeef"}`),
+							Ref:    "$block",
+						},
+						ExpectedResponse: Response{Result: Result(`{"ref": "$block"}`)},
+					},
+					expectedChain: []int{},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "callbacks#4",
+							Method: "btck_chainstate_manager_process_block",
+							Params: json.RawMessage(`{"chainstate_manager": {"ref": "$chainman"}, "block": {"ref": "$block"}}`),
+						},
+						ExpectedResponse: Response{},
+					},
+					expectedChain: []int{0, 1, 2, 3},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "callbacks#5",
+							Method: "notification_callbacks_drain",
+							Params: json.RawMessage(`{"interface": {"ref": "$notif"}}`),
+						},
+						ExpectedResponse: Response{Result: Result(`[{"callback": "btck_NotifyBlockTip", "entry": {"ref": "$entry"}}]`)},
+					},
+					expectedChain: []int{0, 1, 2, 3, 4},
+				},
+				{
+					tc: TestCase{
+						Request: Request{
+							ID:     "callbacks#6",
+							Method: "btck_block_tree_entry_get_height",
+							Params: json.RawMessage(`{"entry": {"ref": "$entry"}}`),
+						},
+						ExpectedResponse: Response{Result: Result(`1`)},
+					},
+					expectedChain: []int{0, 1, 2, 3, 4, 5},
 				},
 			},
 		},

@@ -34,6 +34,7 @@
           "required": [
             "chain_parameters"
           ],
+          "x-doc-order": ["chain_parameters", "notifications", "validation_interface"],
           "properties": {
             "chain_parameters": {
               "type": "object",
@@ -53,6 +54,14 @@
                   "description": "Chain type"
                 }
               }
+            },
+            "notifications": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Notification callbacks interface to wire into this context"
+            },
+            "validation_interface": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Validation interface to wire into this context"
             }
           }
         },

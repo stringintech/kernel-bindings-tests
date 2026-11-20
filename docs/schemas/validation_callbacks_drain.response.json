@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Array of invocation records, one per callback fired since the last drain. Each record is an object with a `callback` field identifying the type, plus type-specific fields:\n- `btck_ValidationInterfaceBlockChecked`: `block` (reference to an owned Block copy), `state` (reference to an owned BlockValidationState copy)\n- `btck_ValidationInterfacePoWValidBlock`: `block` (reference to an owned Block copy), `entry` (reference to a BlockTreeEntry view)\n- `btck_ValidationInterfaceBlockConnected`: `block` (reference to an owned Block copy), `entry` (reference to a BlockTreeEntry view)\n- `btck_ValidationInterfaceBlockDisconnected`: `block` (reference to an owned Block copy), `entry` (reference to a BlockTreeEntry view)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["result"],
+  "properties": {
+    "result": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["callback", "block", "state"],
+            "properties": {
+              "callback": { "const": "btck_ValidationInterfaceBlockChecked" },
+              "block": { "$ref": "./shared.json#/$defs/RefObject" },
+              "state": { "$ref": "./shared.json#/$defs/RefObject" }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["callback", "block", "entry"],
+            "properties": {
+              "callback": { "const": "btck_ValidationInterfacePoWValidBlock" },
+              "block": { "$ref": "./shared.json#/$defs/RefObject" },
+              "entry": { "$ref": "./shared.json#/$defs/RefObject" }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["callback", "block", "entry"],
+            "properties": {
+              "callback": { "const": "btck_ValidationInterfaceBlockConnected" },
+              "block": { "$ref": "./shared.json#/$defs/RefObject" },
+              "entry": { "$ref": "./shared.json#/$defs/RefObject" }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["callback", "block", "entry"],
+            "properties": {
+              "callback": { "const": "btck_ValidationInterfaceBlockDisconnected" },
+              "block": { "$ref": "./shared.json#/$defs/RefObject" },
+              "entry": { "$ref": "./shared.json#/$defs/RefObject" }
+            }
+          }
+        ]
+      }
+    },
+    "error": { "type": "null" }
+  }
+}

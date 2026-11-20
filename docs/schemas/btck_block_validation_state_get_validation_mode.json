@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Gets the validation mode of a block validation state",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "request",
+    "expected_response"
+  ],
+  "properties": {
+    "description": {
+      "$ref": "./shared.json#/$defs/NonEmptyText"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "method",
+        "params"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./shared.json#/$defs/TestCaseID"
+        },
+        "method": {
+          "const": "btck_block_validation_state_get_validation_mode"
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state"
+          ],
+          "x-doc-order": ["state"],
+          "properties": {
+            "state": {
+              "$ref": "./shared.json#/$defs/RefObject",
+              "description": "Block validation state reference"
+            }
+          }
+        }
+      }
+    },
+    "expected_response": {
+      "$ref": "./btck_block_validation_state_get_validation_mode.response.json"
+    }
+  }
+}

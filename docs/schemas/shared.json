@@ -82,6 +82,13 @@
         "error": { "type": "null" }
       }
     },
+    "SynchronizationState": {
+      "enum": [
+        "btck_SynchronizationState_INIT_REINDEX",
+        "btck_SynchronizationState_INIT_DOWNLOAD",
+        "btck_SynchronizationState_POST_INIT"
+      ]
+    },
     "GenericErrorResponse": {
       "type": "object",
       "additionalProperties": false,

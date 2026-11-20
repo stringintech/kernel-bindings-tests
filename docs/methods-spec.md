@@ -318,6 +318,45 @@ Gets the block hash from a block tree entry.
 
 ---
 
+#### `btck_block_tree_entry_get_height`
+
+Gets the height of a block tree entry.
+
+**Parameters:**
+- `block_tree_entry` (reference, required): Block tree entry reference
+
+**Result:** Integer - Height of the block tree entry
+
+**Error:** `null` (cannot return error)
+
+---
+
+#### `btck_block_validation_state_destroy`
+
+Destroys a block validation state.
+
+**Parameters:**
+- `state` (reference, required): Block validation state reference to destroy
+
+**Result:** `null` (void operation)
+
+**Error:** `null` (cannot return error)
+
+---
+
+#### `btck_block_validation_state_get_validation_mode`
+
+Gets the validation mode of a block validation state.
+
+**Parameters:**
+- `state` (reference, required): Block validation state reference
+
+**Result:** Validation mode of the block validation state
+
+**Error:** `null` (cannot return error)
+
+---
+
 #### `btck_chain_contains`
 
 Checks whether a block tree entry is part of the active chain.
@@ -425,6 +464,8 @@ Creates a context with specified chain parameters.
       - `btck_ChainType_TESTNET_4`
       - `btck_ChainType_SIGNET`
       - `btck_ChainType_REGTEST`
+- `notifications` (reference, optional): Notification callbacks interface to wire into this context
+- `validation_interface` (reference, optional): Validation interface to wire into this context
 
 **Result:** Reference - Contains the created context (e.g., `{"ref": "$context"}`)
 
@@ -876,5 +917,79 @@ Returns the txid as raw bytes encoded as hex.
 - `txid` (reference, required): Txid reference
 
 **Result:** String - Hex-encoded raw 32-byte txid
+
+**Error:** `null` (cannot return error)
+
+---
+
+#### `notification_callbacks_create`
+
+Creates a notification callbacks interface.
+
+**Parameters:**
+- `callbacks` (array of strings, required): Allowed values:
+    - `btck_NotifyBlockTip`
+    - `btck_NotifyHeaderTip`
+    - `btck_NotifyProgress`
+    - `btck_NotifyWarningSet`
+    - `btck_NotifyWarningUnset`
+    - `btck_NotifyFlushError`
+    - `btck_NotifyFatalError`
+
+**Result:** Reference - Contains the created notification callbacks interface ref
+
+**Error:** `null` (cannot return error)
+
+---
+
+#### `notification_callbacks_drain`
+
+Drains all queued callback invocation records from a notification callbacks interface.
+
+**Parameters:**
+- `interface` (reference, required): Notification callbacks interface reference
+
+**Result:** Array of invocation records, one per callback fired since the last drain. Each record is an object with a `callback` field identifying the type, plus type-specific fields:
+- `btck_NotifyBlockTip`: `state` (SynchronizationState string), `entry` (reference to a BlockTreeEntry), `verification_progress` (number)
+- `btck_NotifyHeaderTip`: `state` (SynchronizationState string), `height` (integer), `timestamp` (integer), `presync` (boolean)
+- `btck_NotifyProgress`: `title` (string), `percent` (integer), `resumable` (boolean)
+- `btck_NotifyWarningSet`: `warning` (Warning string), `message` (string)
+- `btck_NotifyWarningUnset`: `warning` (Warning string)
+- `btck_NotifyFlushError`: `message` (string)
+- `btck_NotifyFatalError`: `message` (string)
+
+**Error:** `null` (cannot return error)
+
+---
+
+#### `validation_callbacks_drain`
+
+Drains all queued callback invocation records from a validation interface.
+
+**Parameters:**
+- `interface` (reference, required): Validation interface reference
+
+**Result:** Array of invocation records, one per callback fired since the last drain. Each record is an object with a `callback` field identifying the type, plus type-specific fields:
+- `btck_ValidationInterfaceBlockChecked`: `block` (reference to an owned Block copy), `state` (reference to an owned BlockValidationState copy)
+- `btck_ValidationInterfacePoWValidBlock`: `block` (reference to an owned Block copy), `entry` (reference to a BlockTreeEntry view)
+- `btck_ValidationInterfaceBlockConnected`: `block` (reference to an owned Block copy), `entry` (reference to a BlockTreeEntry view)
+- `btck_ValidationInterfaceBlockDisconnected`: `block` (reference to an owned Block copy), `entry` (reference to a BlockTreeEntry view)
+
+**Error:** `null` (cannot return error)
+
+---
+
+#### `validation_interface_callbacks_create`
+
+Creates a validation interface.
+
+**Parameters:**
+- `callbacks` (array of strings, required): Allowed values:
+    - `btck_ValidationInterfaceBlockChecked`
+    - `btck_ValidationInterfacePoWValidBlock`
+    - `btck_ValidationInterfaceBlockConnected`
+    - `btck_ValidationInterfaceBlockDisconnected`
+
+**Result:** Reference - Contains the created validation interface ref
 
 **Error:** `null` (cannot return error)
